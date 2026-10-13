@@ -1,0 +1,1595 @@
+{
+ "name": "Odin 2",
+ "params": [
+  {
+   "key": "polyphony",
+   "name": "Polyphony",
+   "min": 1,
+   "max": 24,
+   "display": "int",
+   "default": 16
+  },
+  {
+   "key": "preset",
+   "name": "Preset",
+   "min": 0,
+   "max": 260,
+   "display": "int",
+   "nudge_pct": 10
+  },
+  {
+   "key": "preset_name",
+   "name": "Patch",
+   "display": "string",
+   "poll": false
+  },
+  {
+   "key": "preset_prev",
+   "name": "Prev Patch",
+   "momentary": true,
+   "step_of": "preset",
+   "step_delta": -1
+  },
+  {
+   "key": "preset_next",
+   "name": "Next Patch",
+   "momentary": true,
+   "step_of": "preset",
+   "step_delta": 1
+  },
+  {
+   "key": "panic",
+   "name": "Stop",
+   "momentary": true,
+   "hold_ms": 250
+  },
+  {
+   "key": "cpu",
+   "name": "CPU",
+   "min": 0,
+   "max": 100,
+   "display": "int"
+  },
+  {
+   "key": "osc1_type",
+   "name": "Osc1 Type",
+   "options": [
+    "Off",
+    "Analog",
+    "Wavetable",
+    "Multi",
+    "Vector",
+    "Chiptune",
+    "FM",
+    "PM",
+    "Noise",
+    "WaveDraw",
+    "ChipDraw",
+    "SpecDraw"
+   ]
+  },
+  {
+   "key": "osc1_oct",
+   "name": "Osc1 Octave",
+   "min": -4,
+   "max": 4,
+   "display": "int"
+  },
+  {
+   "key": "osc1_semi",
+   "name": "Osc1 Semi",
+   "min": -12,
+   "max": 12,
+   "display": "int"
+  },
+  {
+   "key": "osc1_fine",
+   "name": "Osc1 Fine",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc1_vol",
+   "name": "Osc1 Volume",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc1_wave",
+   "name": "Osc1 Wave",
+   "options": [
+    "Saw",
+    "Pulse",
+    "Triangle",
+    "Sine"
+   ]
+  },
+  {
+   "key": "osc1_pw",
+   "name": "Osc1 PW",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc1_drift",
+   "name": "Osc1 Drift",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc1_table",
+   "name": "Osc1 Table",
+   "options": [
+    "Classic Analog",
+    "Nasal",
+    "Reed",
+    "Glass",
+    "FM",
+    "BrokenSine",
+    "Harsh",
+    "Mean",
+    "Rectangular",
+    "Bitreduced",
+    "Strings",
+    "Piano",
+    "Organ",
+    "Oboe",
+    "Trumpet",
+    "MixedWaves A",
+    "MixedWaves B",
+    "MixedWaves C",
+    "MixedWaves D",
+    "Voice A",
+    "Voice B",
+    "Voice C",
+    "Voice D",
+    "Additive A",
+    "Additive B",
+    "Additive C",
+    "Additive D",
+    "Overtones A",
+    "Overtones B",
+    "Harmonics A",
+    "Harmonics B",
+    "MutantSaw A",
+    "MutantSaw B",
+    "MutantSquare A",
+    "MutantSquare B"
+   ]
+  },
+  {
+   "key": "osc1_pos",
+   "name": "Osc1 Position",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc1_posmod",
+   "name": "Osc1 Pos Mod",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc1_mpos",
+   "name": "Osc1 Multi Pos",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc1_spread",
+   "name": "Osc1 Spread",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc1_detune",
+   "name": "Osc1 Detune",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc1_vecx",
+   "name": "Osc1 Vector X",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc1_vecy",
+   "name": "Osc1 Vector Y",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc1_chip",
+   "name": "Osc1 Chip Wave",
+   "options": [
+    "Pulse 50",
+    "Pulse 25",
+    "Pulse 12.5",
+    "Triangle",
+    "Saw",
+    "Sine"
+   ]
+  },
+  {
+   "key": "osc1_chipnoise",
+   "name": "Osc1 Chip Noise",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "osc1_fm",
+   "name": "Osc1 FM Amount",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc1_cratio",
+   "name": "Osc1 Carrier",
+   "min": 1,
+   "max": 16,
+   "display": "int"
+  },
+  {
+   "key": "osc1_mratio",
+   "name": "Osc1 Modulator",
+   "min": 1,
+   "max": 16,
+   "display": "int"
+  },
+  {
+   "key": "osc1_lp",
+   "name": "Osc1 Noise LP",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc1_hp",
+   "name": "Osc1 Noise HP",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc2_type",
+   "name": "Osc2 Type",
+   "options": [
+    "Off",
+    "Analog",
+    "Wavetable",
+    "Multi",
+    "Vector",
+    "Chiptune",
+    "FM",
+    "PM",
+    "Noise",
+    "WaveDraw",
+    "ChipDraw",
+    "SpecDraw"
+   ]
+  },
+  {
+   "key": "osc2_oct",
+   "name": "Osc2 Octave",
+   "min": -4,
+   "max": 4,
+   "display": "int"
+  },
+  {
+   "key": "osc2_semi",
+   "name": "Osc2 Semi",
+   "min": -12,
+   "max": 12,
+   "display": "int"
+  },
+  {
+   "key": "osc2_fine",
+   "name": "Osc2 Fine",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc2_vol",
+   "name": "Osc2 Volume",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc2_wave",
+   "name": "Osc2 Wave",
+   "options": [
+    "Saw",
+    "Pulse",
+    "Triangle",
+    "Sine"
+   ]
+  },
+  {
+   "key": "osc2_pw",
+   "name": "Osc2 PW",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc2_drift",
+   "name": "Osc2 Drift",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc2_table",
+   "name": "Osc2 Table",
+   "options": [
+    "Classic Analog",
+    "Nasal",
+    "Reed",
+    "Glass",
+    "FM",
+    "BrokenSine",
+    "Harsh",
+    "Mean",
+    "Rectangular",
+    "Bitreduced",
+    "Strings",
+    "Piano",
+    "Organ",
+    "Oboe",
+    "Trumpet",
+    "MixedWaves A",
+    "MixedWaves B",
+    "MixedWaves C",
+    "MixedWaves D",
+    "Voice A",
+    "Voice B",
+    "Voice C",
+    "Voice D",
+    "Additive A",
+    "Additive B",
+    "Additive C",
+    "Additive D",
+    "Overtones A",
+    "Overtones B",
+    "Harmonics A",
+    "Harmonics B",
+    "MutantSaw A",
+    "MutantSaw B",
+    "MutantSquare A",
+    "MutantSquare B"
+   ]
+  },
+  {
+   "key": "osc2_pos",
+   "name": "Osc2 Position",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc2_posmod",
+   "name": "Osc2 Pos Mod",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc2_mpos",
+   "name": "Osc2 Multi Pos",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc2_spread",
+   "name": "Osc2 Spread",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc2_detune",
+   "name": "Osc2 Detune",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc2_vecx",
+   "name": "Osc2 Vector X",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc2_vecy",
+   "name": "Osc2 Vector Y",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc2_chip",
+   "name": "Osc2 Chip Wave",
+   "options": [
+    "Pulse 50",
+    "Pulse 25",
+    "Pulse 12.5",
+    "Triangle",
+    "Saw",
+    "Sine"
+   ]
+  },
+  {
+   "key": "osc2_chipnoise",
+   "name": "Osc2 Chip Noise",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "osc2_fm",
+   "name": "Osc2 FM Amount",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc2_cratio",
+   "name": "Osc2 Carrier",
+   "min": 1,
+   "max": 16,
+   "display": "int"
+  },
+  {
+   "key": "osc2_mratio",
+   "name": "Osc2 Modulator",
+   "min": 1,
+   "max": 16,
+   "display": "int"
+  },
+  {
+   "key": "osc2_lp",
+   "name": "Osc2 Noise LP",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc2_hp",
+   "name": "Osc2 Noise HP",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc3_type",
+   "name": "Osc3 Type",
+   "options": [
+    "Off",
+    "Analog",
+    "Wavetable",
+    "Multi",
+    "Vector",
+    "Chiptune",
+    "FM",
+    "PM",
+    "Noise",
+    "WaveDraw",
+    "ChipDraw",
+    "SpecDraw"
+   ]
+  },
+  {
+   "key": "osc3_oct",
+   "name": "Osc3 Octave",
+   "min": -4,
+   "max": 4,
+   "display": "int"
+  },
+  {
+   "key": "osc3_semi",
+   "name": "Osc3 Semi",
+   "min": -12,
+   "max": 12,
+   "display": "int"
+  },
+  {
+   "key": "osc3_fine",
+   "name": "Osc3 Fine",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc3_vol",
+   "name": "Osc3 Volume",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc3_wave",
+   "name": "Osc3 Wave",
+   "options": [
+    "Saw",
+    "Pulse",
+    "Triangle",
+    "Sine"
+   ]
+  },
+  {
+   "key": "osc3_pw",
+   "name": "Osc3 PW",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc3_drift",
+   "name": "Osc3 Drift",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc3_table",
+   "name": "Osc3 Table",
+   "options": [
+    "Classic Analog",
+    "Nasal",
+    "Reed",
+    "Glass",
+    "FM",
+    "BrokenSine",
+    "Harsh",
+    "Mean",
+    "Rectangular",
+    "Bitreduced",
+    "Strings",
+    "Piano",
+    "Organ",
+    "Oboe",
+    "Trumpet",
+    "MixedWaves A",
+    "MixedWaves B",
+    "MixedWaves C",
+    "MixedWaves D",
+    "Voice A",
+    "Voice B",
+    "Voice C",
+    "Voice D",
+    "Additive A",
+    "Additive B",
+    "Additive C",
+    "Additive D",
+    "Overtones A",
+    "Overtones B",
+    "Harmonics A",
+    "Harmonics B",
+    "MutantSaw A",
+    "MutantSaw B",
+    "MutantSquare A",
+    "MutantSquare B"
+   ]
+  },
+  {
+   "key": "osc3_pos",
+   "name": "Osc3 Position",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc3_posmod",
+   "name": "Osc3 Pos Mod",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc3_mpos",
+   "name": "Osc3 Multi Pos",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc3_spread",
+   "name": "Osc3 Spread",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc3_detune",
+   "name": "Osc3 Detune",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc3_vecx",
+   "name": "Osc3 Vector X",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc3_vecy",
+   "name": "Osc3 Vector Y",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc3_chip",
+   "name": "Osc3 Chip Wave",
+   "options": [
+    "Pulse 50",
+    "Pulse 25",
+    "Pulse 12.5",
+    "Triangle",
+    "Saw",
+    "Sine"
+   ]
+  },
+  {
+   "key": "osc3_chipnoise",
+   "name": "Osc3 Chip Noise",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "osc3_fm",
+   "name": "Osc3 FM Amount",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc3_cratio",
+   "name": "Osc3 Carrier",
+   "min": 1,
+   "max": 16,
+   "display": "int"
+  },
+  {
+   "key": "osc3_mratio",
+   "name": "Osc3 Modulator",
+   "min": 1,
+   "max": 16,
+   "display": "int"
+  },
+  {
+   "key": "osc3_lp",
+   "name": "Osc3 Noise LP",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "osc3_hp",
+   "name": "Osc3 Noise HP",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil1_type",
+   "name": "Filter1 Type",
+   "options": [
+    "Bypass",
+    "LP 24",
+    "LP 12",
+    "BP 24",
+    "BP 12",
+    "HP 24",
+    "HP 12",
+    "SEM 12",
+    "Diode",
+    "Korg LP",
+    "Korg HP",
+    "Comb",
+    "Formant",
+    "RingMod"
+   ]
+  },
+  {
+   "key": "fil1_freq",
+   "name": "Filter1 Freq",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil1_res",
+   "name": "Filter1 Reso",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil1_env",
+   "name": "Filter1 Env",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil1_kbd",
+   "name": "Filter1 Kbd",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil1_vel",
+   "name": "Filter1 Vel",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil1_gain",
+   "name": "Filter1 Gain",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil1_sat",
+   "name": "Filter1 Saturation",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil1_sem",
+   "name": "Filter1 SEM Shape",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil1_formant",
+   "name": "Filter1 Vowel",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil1_ring",
+   "name": "Filter1 Ring Amt",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil2_type",
+   "name": "Filter2 Type",
+   "options": [
+    "Bypass",
+    "LP 24",
+    "LP 12",
+    "BP 24",
+    "BP 12",
+    "HP 24",
+    "HP 12",
+    "SEM 12",
+    "Diode",
+    "Korg LP",
+    "Korg HP",
+    "Comb",
+    "Formant",
+    "RingMod"
+   ]
+  },
+  {
+   "key": "fil2_freq",
+   "name": "Filter2 Freq",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil2_res",
+   "name": "Filter2 Reso",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil2_env",
+   "name": "Filter2 Env",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil2_kbd",
+   "name": "Filter2 Kbd",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil2_vel",
+   "name": "Filter2 Vel",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil2_gain",
+   "name": "Filter2 Gain",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil2_sat",
+   "name": "Filter2 Saturation",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil2_sem",
+   "name": "Filter2 SEM Shape",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil2_formant",
+   "name": "Filter2 Vowel",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil2_ring",
+   "name": "Filter2 Ring Amt",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil3_type",
+   "name": "Filter3 Type",
+   "options": [
+    "Bypass",
+    "LP 24",
+    "LP 12",
+    "BP 24",
+    "BP 12",
+    "HP 24",
+    "HP 12",
+    "SEM 12",
+    "Diode",
+    "Korg LP",
+    "Korg HP",
+    "Comb",
+    "Formant",
+    "RingMod"
+   ]
+  },
+  {
+   "key": "fil3_freq",
+   "name": "Filter3 Freq",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil3_res",
+   "name": "Filter3 Reso",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil3_env",
+   "name": "Filter3 Env",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil3_kbd",
+   "name": "Filter3 Kbd",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil3_vel",
+   "name": "Filter3 Vel",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil3_gain",
+   "name": "Filter3 Gain",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil3_sat",
+   "name": "Filter3 Saturation",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil3_sem",
+   "name": "Filter3 SEM Shape",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil3_formant",
+   "name": "Filter3 Vowel",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil3_ring",
+   "name": "Filter3 Ring Amt",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "fil1_osc1",
+   "name": "Osc1 > Fil1",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "fil1_osc2",
+   "name": "Osc2 > Fil1",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "fil1_osc3",
+   "name": "Osc3 > Fil1",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "fil2_osc1",
+   "name": "Osc1 > Fil2",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "fil2_osc2",
+   "name": "Osc2 > Fil2",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "fil2_osc3",
+   "name": "Osc3 > Fil2",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "fil2_fil1",
+   "name": "Fil1 > Fil2",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "fil1_amp",
+   "name": "Fil1 > Amp",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "fil2_amp",
+   "name": "Fil2 > Amp",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "amp_gain",
+   "name": "Amp Gain",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "amp_pan",
+   "name": "Amp Pan",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "amp_vel",
+   "name": "Amp Velocity",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "dist_on",
+   "name": "Distortion",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "dist_algo",
+   "name": "Dist Type",
+   "options": [
+    "Clamp",
+    "Fold",
+    "Zero"
+   ]
+  },
+  {
+   "key": "dist_boost",
+   "name": "Dist Boost",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "dist_mix",
+   "name": "Dist Mix",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "env1_a",
+   "name": "Amp Env A",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "env1_d",
+   "name": "Amp Env D",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "env1_s",
+   "name": "Amp Env S",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "env1_r",
+   "name": "Amp Env R",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "env2_a",
+   "name": "Filter Env A",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "env2_d",
+   "name": "Filter Env D",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "env2_s",
+   "name": "Filter Env S",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "env2_r",
+   "name": "Filter Env R",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "env3_a",
+   "name": "Mod Env A",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "env3_d",
+   "name": "Mod Env D",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "env3_s",
+   "name": "Mod Env S",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "env3_r",
+   "name": "Mod Env R",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "lfo1_rate",
+   "name": "LFO1 Rate",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "lfo1_wave",
+   "name": "LFO1 Wave",
+   "options": [
+    "Sine",
+    "Saw",
+    "Triangle",
+    "Square 50",
+    "Square 25",
+    "Square 12",
+    "Peak",
+    "S&H",
+    "Pyramid 4",
+    "Pyramid 6",
+    "Pyramid 8",
+    "Pyramid 12",
+    "Stair 3",
+    "Stair 4",
+    "Stair 6",
+    "Stair 8",
+    "Stair 12",
+    "WaveDraw 1",
+    "WaveDraw 2",
+    "WaveDraw 3",
+    "ChipDraw 1",
+    "ChipDraw 2",
+    "ChipDraw 3"
+   ]
+  },
+  {
+   "key": "lfo2_rate",
+   "name": "LFO2 Rate",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "lfo2_wave",
+   "name": "LFO2 Wave",
+   "options": [
+    "Sine",
+    "Saw",
+    "Triangle",
+    "Square 50",
+    "Square 25",
+    "Square 12",
+    "Peak",
+    "S&H",
+    "Pyramid 4",
+    "Pyramid 6",
+    "Pyramid 8",
+    "Pyramid 12",
+    "Stair 3",
+    "Stair 4",
+    "Stair 6",
+    "Stair 8",
+    "Stair 12",
+    "WaveDraw 1",
+    "WaveDraw 2",
+    "WaveDraw 3",
+    "ChipDraw 1",
+    "ChipDraw 2",
+    "ChipDraw 3"
+   ]
+  },
+  {
+   "key": "lfo3_rate",
+   "name": "LFO3 Rate",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "lfo3_wave",
+   "name": "LFO3 Wave",
+   "options": [
+    "Sine",
+    "Saw",
+    "Triangle",
+    "Square 50",
+    "Square 25",
+    "Square 12",
+    "Peak",
+    "S&H",
+    "Pyramid 4",
+    "Pyramid 6",
+    "Pyramid 8",
+    "Pyramid 12",
+    "Stair 3",
+    "Stair 4",
+    "Stair 6",
+    "Stair 8",
+    "Stair 12",
+    "WaveDraw 1",
+    "WaveDraw 2",
+    "WaveDraw 3",
+    "ChipDraw 1",
+    "ChipDraw 2",
+    "ChipDraw 3"
+   ]
+  },
+  {
+   "key": "lfo4_rate",
+   "name": "Global LFO Rate",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "lfo4_wave",
+   "name": "Global LFO Wave",
+   "options": [
+    "Sine",
+    "Saw",
+    "Triangle",
+    "Square 50",
+    "Square 25",
+    "Square 12",
+    "Peak",
+    "S&H",
+    "Pyramid 4",
+    "Pyramid 6",
+    "Pyramid 8",
+    "Pyramid 12",
+    "Stair 3",
+    "Stair 4",
+    "Stair 6",
+    "Stair 8",
+    "Stair 12",
+    "WaveDraw 1",
+    "WaveDraw 2",
+    "WaveDraw 3",
+    "ChipDraw 1",
+    "ChipDraw 2",
+    "ChipDraw 3"
+   ]
+  },
+  {
+   "key": "delay_on",
+   "name": "Delay",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "delay_time",
+   "name": "Delay Time",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "delay_fb",
+   "name": "Delay Feedback",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "delay_wet",
+   "name": "Delay Wet",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "delay_pp",
+   "name": "Ping Pong",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "chorus_on",
+   "name": "Chorus",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "chorus_rate",
+   "name": "Chorus Rate",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "chorus_amt",
+   "name": "Chorus Amount",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "chorus_mix",
+   "name": "Chorus Mix",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "phaser_on",
+   "name": "Phaser",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "phaser_rate",
+   "name": "Phaser Rate",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "phaser_amt",
+   "name": "Phaser Amount",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "phaser_mix",
+   "name": "Phaser Mix",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "flanger_on",
+   "name": "Flanger",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "flanger_rate",
+   "name": "Flanger Rate",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "flanger_amt",
+   "name": "Flanger Amount",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "flanger_mix",
+   "name": "Flanger Mix",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "reverb_on",
+   "name": "Reverb",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "reverb_size",
+   "name": "Reverb Hall",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "reverb_damp",
+   "name": "Reverb Damp",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "reverb_mix",
+   "name": "Reverb Mix",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "master",
+   "name": "Master",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "glide",
+   "name": "Glide",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "playmode",
+   "name": "Play Mode",
+   "options": [
+    "Legato",
+    "Poly",
+    "Retrig"
+   ],
+   "default": 1
+  },
+  {
+   "key": "unison",
+   "name": "Unison",
+   "options": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "6",
+    "12"
+   ]
+  },
+  {
+   "key": "uni_detune",
+   "name": "Uni Detune",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "uni_width",
+   "name": "Uni Width",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true
+  },
+  {
+   "key": "bend",
+   "name": "Bend Range",
+   "min": 0,
+   "max": 24,
+   "display": "int"
+  },
+  {
+   "key": "arp_on",
+   "name": "Arpeggiator",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "eco",
+   "name": "ECO",
+   "options": [
+    "Off",
+    "Auto",
+    "Eco",
+    "Lite"
+   ],
+   "default": 1
+  },
+  {
+   "key": "eco_active",
+   "name": "ECO Active",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "osc1_shape",
+   "name": "Osc1 Shape",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true,
+   "dynamic_name": true
+  },
+  {
+   "key": "osc2_shape",
+   "name": "Osc2 Shape",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true,
+   "dynamic_name": true
+  },
+  {
+   "key": "osc3_shape",
+   "name": "Osc3 Shape",
+   "min": 0.0,
+   "max": 1.0,
+   "dynamic_display": true,
+   "dynamic_name": true
+  },
+  {
+   "key": "voices",
+   "name": "Voices",
+   "display": "string"
+  },
+  {
+   "key": "tune",
+   "name": "Master Tune",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "dynamic_display": true
+  }
+ ]
+}

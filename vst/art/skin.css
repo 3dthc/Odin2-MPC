@@ -1,0 +1,16 @@
+/* Odin 2 for MPC: the browser renderer's artwork in Odin's look (Aldrich, Odin's UI font, SIL OFL: fonts/OFL.txt).
+ * MPC draws live names and values itself in Titillium Web; this only restyles what is baked into images. Sizes are
+ * for reading at arm's length: option buttons and list rows at 19 px. */
+@font-face { font-family: "Aldrich"; src: url("fonts/Aldrich-Regular.ttf"); }
+:root {
+  --title-font: "Aldrich", var(--font);
+  --label-size: 17px;
+  --seg-size: 19px;
+  --button-size: 19px;
+  --radius: 4px;
+  --sheen: 0.06;
+}
+.seg-tx, .button-tx, .box-label, .text, .frame-title { font-family: "Aldrich", var(--font); font-weight: 400; }
+.box { fill: #0a2832; stroke: #05151b; stroke-width: 2; }
+.seg-bg { stroke: #0b0c0d; stroke-width: 1.5; }
+.tile { stroke: #0b0c0d; }

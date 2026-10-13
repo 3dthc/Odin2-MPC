@@ -1,0 +1,84 @@
+{
+ "name": "Odin 2",
+ "vendor": "3dthc",
+ "uid": "Od2M",
+ "version": 1000,
+ "so": "odin2.so",
+ "params": "params.json",
+ "layout": "layout.conf",
+ "art": "html",
+ "programs": {
+  "param": "preset"
+ },
+ "defines": {
+  "HAS_LFO_BPM": 1,
+  "HAS_DISPLAY_REV": 1,
+  "DISPLAY_REV_NO_UPDATE": 1,
+  "PARAM_TEXT_MAX": 48
+ },
+ "build": {
+  "root": "..",
+  "sources": [
+   "src/odin/Source/audio/ADSR.cpp",
+   "src/odin/Source/audio/Amplifier.cpp",
+   "src/odin/Source/audio/FX/Chorus.cpp",
+   "src/odin/Source/audio/FX/Delay.cpp",
+   "src/odin/Source/audio/FX/Flanger.cpp",
+   "src/odin/Source/audio/FX/OversamplingDistortion.cpp",
+   "src/odin/Source/audio/FX/ParametricEQ.cpp",
+   "src/odin/Source/audio/FX/Phaser.cpp",
+   "src/odin/Source/audio/FX/RingModulator.cpp",
+   "src/odin/Source/audio/FX/ZitaReverb.cpp",
+   "src/odin/Source/audio/Filters/BiquadAllpass.cpp",
+   "src/odin/Source/audio/Filters/BiquadEQ.cpp",
+   "src/odin/Source/audio/Filters/BiquadFilter.cpp",
+   "src/odin/Source/audio/Filters/BiquadResonator.cpp",
+   "src/odin/Source/audio/Filters/CombFilter.cpp",
+   "src/odin/Source/audio/Filters/DiodeFilter.cpp",
+   "src/odin/Source/audio/Filters/FormantFilter.cpp",
+   "src/odin/Source/audio/Filters/Korg35Filter.cpp",
+   "src/odin/Source/audio/Filters/LadderFilter.cpp",
+   "src/odin/Source/audio/Filters/OdinFilterBase.cpp",
+   "src/odin/Source/audio/Filters/SEMFilter12.cpp",
+   "src/odin/Source/audio/Filters/VAOnePoleFilter.cpp",
+   "src/odin/Source/audio/Oscillators/AnalogOscillator.cpp",
+   "src/odin/Source/audio/Oscillators/ChiptuneArpeggiator.cpp",
+   "src/odin/Source/audio/Oscillators/ChiptuneOscillator.cpp",
+   "src/odin/Source/audio/Oscillators/DriftGenerator.cpp",
+   "src/odin/Source/audio/Oscillators/FMOscillator.cpp",
+   "src/odin/Source/audio/Oscillators/LFO.cpp",
+   "src/odin/Source/audio/Oscillators/MultiOscillator.cpp",
+   "src/odin/Source/audio/Oscillators/NoiseOscillator.cpp",
+   "src/odin/Source/audio/Oscillators/Oscillator.cpp",
+   "src/odin/Source/audio/Oscillators/PMOscillator.cpp",
+   "src/odin/Source/audio/Oscillators/VectorOscillator.cpp",
+   "src/odin/Source/audio/Oscillators/WavetableContainer.cpp",
+   "src/odin/Source/audio/Oscillators/WavetableOsc1D.cpp",
+   "src/odin/Source/audio/Oscillators/WavetableOsc2D.cpp",
+   "src/odin/Source/audio/Oscillators/Wavetables/Tables/LFOTableData.cpp",
+   "src/odin/Source/audio/Oscillators/Wavetables/Tables/WavetableData.cpp",
+   "src/odin/Source/gui/ModMatrix.cpp",
+   "src/odin/Source/gui/OdinArpeggiator.cpp",
+   "src/odin/Source/PluginProcessor.cpp",
+   "src/odin_mpc.cpp"
+  ],
+  "cflags": [
+   "-O3",
+   "-fno-math-errno",
+   "-std=gnu++17",
+   "-w",
+   "-Isrc",
+   "-Isrc/odin/Source",
+   "-Isrc/odin/JuceLibraryCode",
+   "-Isrc/odin/libs/tuning-library"
+  ],
+  "cflags_arm": [
+   "-mtune=cortex-a17",
+   "-mfpu=neon-vfpv4",
+   "-Wno-psabi"
+  ],
+  "libs": [
+   "-lm"
+  ]
+ }
+}
