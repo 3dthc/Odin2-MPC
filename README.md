@@ -1,3 +1,4 @@
+![Odin 2 on the MPC Live II](odin2-mpc-main.png)
 # Odin 2 for MPC
 
 [Odin 2](https://github.com/TheWaveWarden/odin2), TheWaveWarden's semi-modular synthesizer, as a native
