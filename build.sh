@@ -24,6 +24,7 @@ python3 "$MV/tools/release.py" \
   --skin "$P/vst/build/skin/3dthc - VST - Odin 2" \
   --entry "$P/vst/build/pluginlist-entry.xml" \
   --version "$VERSION" \
+  --repo 3dthc/Odin2-MPC --id odin2 --license GPL-3.0-only \
   --about "Odin 2, TheWaveWarden's synthesizer, on MPC OS: Odin's own engine, 261 factory patches, voices sized to the MPC." \
   -o "$P/dist"
 echo
