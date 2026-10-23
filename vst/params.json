@@ -15,7 +15,8 @@
    "min": 0,
    "max": 260,
    "display": "int",
-   "nudge_pct": 10
+   "nudge_pct": 10,
+   "refresh_display": true
   },
   {
    "key": "preset_name",
@@ -66,7 +67,8 @@
     "WaveDraw",
     "ChipDraw",
     "SpecDraw"
-   ]
+   ],
+   "refresh_display": true
   },
   {
    "key": "osc1_oct",
@@ -281,7 +283,8 @@
     "WaveDraw",
     "ChipDraw",
     "SpecDraw"
-   ]
+   ],
+   "refresh_display": true
   },
   {
    "key": "osc2_oct",
@@ -496,7 +499,8 @@
     "WaveDraw",
     "ChipDraw",
     "SpecDraw"
-   ]
+   ],
+   "refresh_display": true
   },
   {
    "key": "osc3_oct",

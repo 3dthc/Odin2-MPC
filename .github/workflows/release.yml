@@ -1,0 +1,32 @@
+# Builds Odin 2 for MPC in GitHub Actions and attaches Odin-2-<version>-mpc-armv7.zip to a DRAFT release.
+# Actions -> Release -> Run workflow, enter the version. Install that zip on an MPC, check it, then publish the draft
+# (publishing creates the tag; the catalog picks it up). mpc-vst-plugins is pinned to one commit in both places below.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version, e.g. 1.4.4
+        required: true
+        type: string
+      dry_run:
+        description: Build and package only (zip and page previews as run artifacts), no draft release
+        type: boolean
+        default: false
+
+jobs:
+  vst:
+    uses: sd88me/mpc-vst-plugins/.github/workflows/vst-release.yml@8aa8d3552a55a93eb4034bb9bbb02cbe91d69b61
+    permissions: { contents: write }
+    with:
+      tag: odin2-v${{ inputs.version }}
+      version: ${{ inputs.version }}
+      tools_ref: 8aa8d3552a55a93eb4034bb9bbb02cbe91d69b61
+      vst_dir: vst
+      build: '"$MPC_VST/tools/build_port.sh" vst/vst.json'
+      host_test: '"$MPC_VST/tools/test_port.sh" vst/vst.json'
+      about: Odin 2, TheWaveWarden's synthesizer, on MPC OS - Odin's own engine, 261 factory patches, voices sized to the MPC.
+      plugin_id: odin2
+      license: GPL-3.0-only
+      dry_run: ${{ inputs.dry_run }}
