@@ -105,3 +105,13 @@
 | 5 | Pages | every page, every Q-Link column, oscillator and filter types | panels change colour/title with the type, values move |
 | 6 | Project | save, reload | same patch, edits, ECO and tune |
 | 7 | Bench | `../mpc-vst-plugins/tools/bench.sh vst/build/odin2.so <ip> -j` | PASS or WARN; record the result here |
+
+## 1.4.4: rebuilt on the 2026-10-21 wrapper
+The wrapper no longer asks MPC to rebuild its parameter screen on every parameter write (Q-Links on the track's automation
+screen snapped back). Text that follows another setting still asks (`"refresh_display"`, set by `vst/make_params.py`): the
+oscillator types (the shape knob's name and value), and the preset and bank arrows, the preset number and the BROWSE picks
+(the unpolled preset and bank names). Check on the device:
+- **track edit → automation, turn the Q-Links**: each moves its parameter and stays;
+- an oscillator's type renames its shape knob at once; the preset and bank arrows and the BROWSE page update the names.
+`vst/params.lock` (written by gen_vst.py) is committed: the build now fails if a parameter changes index. Release zips are
+built by GitHub Actions (Actions → Release → Run workflow); `build.sh` is still the fast local build.

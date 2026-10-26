@@ -16,7 +16,7 @@
 set -euo pipefail
 P="$(cd "$(dirname "$0")" && pwd)"
 MV="${MPC_VST:-$P/../mpc-vst-plugins}"
-VERSION="${VERSION:-1.4.1}"
+VERSION="${VERSION:-1.4.4}"
 if [ ! -x "$MV/tools/build_port.sh" ]; then
   echo "mpc-vst-plugins not found at $MV -- put it next to this folder or set MPC_VST=/path/to/it" >&2
   exit 1

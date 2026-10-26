@@ -301,6 +301,13 @@ def main():
             p["max"] = len(bank["presets"]) - 1
         if p["key"] == "browse_bank":
             p["max"] = len({q["category"] for q in bank["presets"]}) - 1
+    # text that follows another param asks MPC to re-read the screen when that param is written (mpc-vst-plugins
+    # 2026-10-21: plain host writes no longer do): the shape knob's name and value follow its oscillator's type, and the
+    # unpolled preset and bank names follow the preset number, the arrows and the BROWSE page's picks
+    for p in params:
+        if p["key"] in ("osc1_type", "osc2_type", "osc3_type", "preset", "preset_prev", "preset_next", "bank_prev", "bank_next",
+                        "browse_bank", "browse_patch"):
+            p["refresh_display"] = True
     out = {"name": "Odin 2", "params": params}
     with open(os.path.join(HERE, "params.json"), "w") as f:
         json.dump(out, f, indent=1)
