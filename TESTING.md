@@ -1,5 +1,34 @@
 # Testing
 
+## 1.4.1 (2026-10-13, offline)
+
+- **BROWSE Q-Links** (`tools/engine_test.sh`): Q-Link 1 changes the bank only; Q-Link 2's first turn in a new bank picks
+  its first patch, then steps through it and never leaves it (clamped at its ends). Both step once per 5 Q-Link moves
+  (`qlink_ticks`), and show the bank's / patch's name as their value. THEME is no longer on a Q-Link.
+- **Fast build**: `tools/arm.mk` with gcc 10 for armhf (the version Debian bullseye's cross compiler has): builds,
+  exports only `VSTPluginMain`; the engine test PASSES under QEMU on that build. A full compile took 50 s on 2 cores
+  here; touching one source rebuilds it in 4 s. (The Docker image itself, `tools/cross/Dockerfile`, could not be pulled
+  on the development machine: check on first use that `highest glibc` prints 2.31 or lower.)
+- Kit host test (ASan/UBSan): PASSED, 304 checks.
+
+
+## 1.4 (2026-10-13, offline)
+
+- **Pages**: built with the kit's generator and drawn per patch and theme with `tools/device_preview.py` (the patch's
+  real values and live text): no live text wider than its box on any page, in any look, across all factory patches
+  (widest value 81 px in a 112 px plate, widest name 102 px). The skin checker finds no overlapping controls (only
+  open popup lists, which cover the page by design). The Q-Link column outline now ends below the bottom row's values.
+- **Engine** (`tools/engine_test.sh`, x86): BANK arrows change the bank only; PATCH arrows then load that bank's
+  patches in turn; BROWSE bank and patch tiles; the theme is saved with the project. Also: the OSC SHAPE and TUNE A4
+  controls now read back unrounded (in 1.2–1.3 they read back as 0 or 1, so a Q-Link turn could jump).
+- **Kit host test** (ASan/UBSan): PASSED, 301 checks. Parameters 0-178 keep their meaning except `preset_prev` /
+  `preset_next` (now within the bank); appended: `theme`, `bank_slot_1..16`, `patch_slot_1..30`, `bank_name`,
+  `bank_prev`, `bank_next`. Knob display names changed (projects store values, not names).
+- Skin images: about 112 MB decoded (1.3: 66 MB; 1.1's 100 MB ran on a Live II).
+- **On the device**: open Odin and check it opens as quickly as 1.3; switch all four themes on every page; BANK/PATCH
+  arrows; BROWSE taps; that names and values sit inside their plates.
+
+
 ## 1.3 (2026-10-10, offline)
 
 - **ECO Off is still exactly Odin:** with the random generator pinned and the voice budget out of the way, all 259
@@ -76,12 +105,3 @@
 | 5 | Pages | every page, every Q-Link column, oscillator and filter types | panels change colour/title with the type, values move |
 | 6 | Project | save, reload | same patch, edits, ECO and tune |
 | 7 | Bench | `../mpc-vst-plugins/tools/bench.sh vst/build/odin2.so <ip> -j` | PASS or WARN; record the result here |
-
-## 1.4.4: rebuilt on the 2026-10-21 wrapper
-The wrapper no longer asks MPC to rebuild its parameter screen on every parameter write (Q-Links on the track's automation
-screen snapped back). The oscillator types and the preset number still do, because the shape knob's name and value and the
-preset name follow them (`"refresh_display"`, written by `vst/make_params.py`). Check on the device:
-- **track edit → automation, turn the Q-Links**: each moves its parameter and stays;
-- change an oscillator's type: its shape knob's name changes at once; the preset arrows still update the preset name.
-`vst/params.lock` (written by gen_vst.py) is committed: the build now fails if a parameter changes index.
-Release zips are built by GitHub Actions (Actions → Release → Run workflow).

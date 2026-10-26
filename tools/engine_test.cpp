@@ -263,6 +263,47 @@ int main(int argc, char **argv) {
         e->destroy(a); e->destroy(b); e->destroy(c); e->destroy(d);
     }
 
+    // 3f. BROWSE and the top bar (1.4): banks and patches chosen separately; theme saved with the project
+    {
+        void *x = e->create(nullptr);
+        e->set_param(x, "preset", "0");
+        std::string b0 = get(e, x, "bank_name"), p0 = get(e, x, "preset_name");
+        e->set_param(x, "bank_next", "1");
+        std::string b1 = get(e, x, "bank_name");
+        CHECK(b1 != b0 && get(e, x, "preset_name") == p0, "BANK arrow changes the bank only (%s -> %s, still %s)",
+              b0.c_str(), b1.c_str(), p0.c_str());
+        e->set_param(x, "preset_next", "1");
+        std::string p1 = get(e, x, "preset_name");
+        CHECK(p1 == get(e, x, "patch_slot_1") && get(e, x, "patch_slot_1_on") == "1",
+              "PATCH arrow then loads that bank's first patch (%s)", p1.c_str());
+        e->set_param(x, "preset_next", "1");
+        CHECK(get(e, x, "preset_name") == get(e, x, "patch_slot_2"), "and steps within the bank");
+        e->set_param(x, "bank_slot_3", "1");
+        e->set_param(x, "patch_slot_2", "1");
+        CHECK(get(e, x, "bank_name") == get(e, x, "bank_slot_3") && get(e, x, "preset_name") == get(e, x, "patch_slot_2"),
+              "BROWSE: a bank tile, then a patch tile (%s / %s)", get(e, x, "bank_name").c_str(), get(e, x, "preset_name").c_str());
+        // BROWSE Q-Links (1.4.1): BANK moves the bank only; PATCH stays inside the bank (clamped at its ends)
+        std::string before = get(e, x, "preset_name");
+        e->set_param(x, "browse_bank", "5");
+        CHECK(get(e, x, "bank_name") == get(e, x, "bank_slot_6") && get(e, x, "preset_name") == before,
+              "BROWSE Q-Link 1 changes the bank only (%s)", get(e, x, "bank_name").c_str());
+        e->set_param(x, "browse_patch", "3");
+        CHECK(get(e, x, "preset_name") == get(e, x, "patch_slot_1"), "Q-Link 2's first turn in a new bank picks its first patch");
+        e->set_param(x, "browse_patch", "2");
+        std::string bank = get(e, x, "bank_name");
+        CHECK(get(e, x, "preset_name") == get(e, x, "patch_slot_3") && get(e, x, "browse_patch_display") == get(e, x, "preset_name"),
+              "then steps through it (%s)", get(e, x, "preset_name").c_str());
+        e->set_param(x, "browse_patch", "29");
+        CHECK(get(e, x, "bank_name") == bank, "and never leaves the bank (%s, %s)", bank.c_str(), get(e, x, "preset_name").c_str());
+        e->set_param(x, "theme", "3");
+        std::string st = get(e, x, "state");
+        void *y = e->create(nullptr);
+        e->set_param(y, "state", st.c_str());
+        CHECK(get(e, y, "theme") == "3", "the theme is saved with the project");
+        e->destroy(x);
+        e->destroy(y);
+    }
+
     // 4. render cost and the meter
     e->set_param(s, "preset", "100");
     for (int k = 0; k < 8; k++) note(e, s, 0x90, 48 + 3 * k, 100);

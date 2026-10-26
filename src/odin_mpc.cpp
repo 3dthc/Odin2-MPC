@@ -33,6 +33,8 @@ extern "C" {
 #include <ctime>
 #include <new>
 #include <unordered_map>
+#include <vector>
+#include <cstring>
 
 namespace {
 
@@ -72,6 +74,35 @@ const BankEntry BANK[] = {
 #include "presets/bank_data.inc"
 };
 const int NBANK = sizeof BANK / sizeof BANK[0];
+
+/* BROWSE (1.4): the banks are the patch categories, in the order they first appear in the bank */
+const int BANK_SLOTS = 16, PATCH_SLOTS = 30, NTHEMES = 4;
+struct Banks {
+    int n = 0;
+    const char *name[BANK_SLOTS];
+    std::vector<int> patches[BANK_SLOTS];
+    Banks() {
+        for (int i = 0; i < NBANK; i++) {
+            int b = 0;
+            while (b < n && strcmp(name[b], BANK[i].category)) b++;
+            if (b == n) {
+                if (n == BANK_SLOTS) continue;   // more categories than tiles: not browsable (the bank has 15)
+                name[n++] = BANK[i].category;
+            }
+            if ((int)patches[b].size() < PATCH_SLOTS) patches[b].push_back(i);
+        }
+    }
+    int of(int preset) const {
+        for (int b = 0; b < n; b++)
+            for (int p : patches[b])
+                if (p == preset) return b;
+        return 0;
+    }
+};
+const Banks &banks() {
+    static const Banks b;
+    return b;
+}
 
 /* Each factory patch's measured load on the MPC Live II (tools/patch_cost.sh, calibrated on the device): tenths of a
  * percent of the block budget per sounding voice, at audio rate (ECO Off) and at control rate (the other modes), and
@@ -154,6 +185,8 @@ struct Instance {
     // master tune: A4 in Hz (TUNE_LO..TUNE_HI, 0.1 Hz steps), for new notes; the plugin's, not the patch's
     static constexpr float TUNE_LO = 415.f, TUNE_HI = 465.f;
     float tuneHz = 440.f;
+    int theme = 0;        // the page's look (1.4), the plugin's own: kept across patches, saved with the project
+    int browseBank = 0;   // BROWSE: the bank whose patches the list shows
     void setTune(float hz) {
         hz = hz < TUNE_LO ? TUNE_LO : hz > TUNE_HI ? TUNE_HI : hz;
         tuneHz = std::round(hz * 10.f) / 10.f;
@@ -186,6 +219,7 @@ struct Instance {
         preset = n;
         presetState = target;
         startBudget();
+        browseBank = banks().of(n);
         ++displayRev;   // every control may have moved
     }
 
@@ -195,6 +229,7 @@ struct Instance {
         std::string s = "odin2mpc=1\npreset=" + std::to_string(preset) + "\n";
         if (ceiling != VOICE_CEILING) s += "voices=" + std::to_string(ceiling) + "\n";
         if (eco != ECO_AUTO) s += "eco=" + std::to_string(eco) + "\n";
+        if (theme) s += "theme=" + std::to_string(theme) + "\n";
         if (tuneHz != 440.f) {
             char t[32];
             snprintf(t, sizeof t, "tune=%.1f\n", tuneHz);
@@ -215,6 +250,7 @@ struct Instance {
         OdinMPC::Lines lines = OdinMPC::parse(text);
         int n = 0, poly = VOICE_CEILING, e = ECO_AUTO;   // a state saved before ECO existed: Auto
         float tune = 440.f;
+        int th = 0;
         OdinMPC::Lines rest;
         for (auto &kv : lines) {
             if (kv.first == "odin2mpc") continue;
@@ -223,6 +259,7 @@ struct Instance {
             else if (kv.first == "voices") poly = atoi(kv.second.c_str());
             else if (kv.first == "eco") e = atoi(kv.second.c_str());
             else if (kv.first == "tune") tune = (float)atof(kv.second.c_str());
+            else if (kv.first == "theme") th = atoi(kv.second.c_str());
             else rest.push_back(kv);
         }
         loadPreset(n);
@@ -230,6 +267,7 @@ struct Instance {
         setPolyphony(poly);
         setEco(e);
         setTune(tune);
+        theme = th >= 0 && th < NTHEMES ? th : 0;
         ++displayRev;
     }
 
@@ -294,6 +332,14 @@ struct Instance {
             autoCap = want;
             if (eco == ECO_AUTO) applyEco();
         }
+    }
+
+    /* where the loaded patch is in the browsed bank's list (-1: in another bank) */
+    int browseIndex() const {
+        const std::vector<int> &ps = banks().patches[browseBank];
+        for (int i = 0; i < (int)ps.size(); i++)
+            if (ps[i] == preset) return i;
+        return -1;
     }
 
     // ---- voices
@@ -457,9 +503,43 @@ struct Instance {
             std::string k = c.key;
             if (k == "preset") loadPreset((int)std::lround(v));
             else if (k == "panic" && v > 0.5f) odin.panic();
+            else if ((k == "bank_prev" || k == "bank_next") && v > 0.5f) {   // the bank to choose patches from
+                int n = banks().n;
+                browseBank = (browseBank + (k == "bank_next" ? 1 : n - 1)) % n;
+                ++displayRev;
+            } else if ((k == "preset_prev" || k == "preset_next") && v > 0.5f) {   // a patch of that bank
+                const std::vector<int> &ps = banks().patches[browseBank];
+                int at = -1, m = (int)ps.size();
+                for (int i = 0; i < m; i++)
+                    if (ps[i] == preset) at = i;
+                bool next = k == "preset_next";
+                int to = at < 0 ? (next ? 0 : m - 1) : (at + (next ? 1 : m - 1)) % m;
+                if (m) loadPreset(ps[to]);
+            }
             else if (k == "polyphony") setPolyphony((int)std::lround(v));
             else if (k == "eco") setEco((int)std::lround(v));
             else if (k == "tune") setTune(TUNE_LO + v * (TUNE_HI - TUNE_LO));
+            else if (k == "browse_bank") {   // BROWSE Q-Link 1: the bank only, nothing loads
+                int b = (int)std::lround(v);
+                b = b < 0 ? 0 : b >= banks().n ? banks().n - 1 : b;
+                if (b != browseBank) browseBank = b, ++displayRev;
+            } else if (k == "browse_patch") {   // BROWSE Q-Link 2: a patch of the browsed bank, never another bank
+                const std::vector<int> &ps = banks().patches[browseBank];
+                int m = (int)ps.size(), i = (int)std::lround(v), at = browseIndex();
+                i = i < 0 ? 0 : i >= m ? m - 1 : i;
+                if (at < 0) i = 0;   // the loaded patch is in another bank: the first turn picks this bank's first
+                if (m && ps[i] != preset) loadPreset(ps[i]);
+            } else if (k == "theme") {
+                int t = (int)std::lround(v);
+                if (t >= 0 && t < NTHEMES && t != theme) theme = t, ++displayRev;
+            } else if (k.compare(0, 10, "bank_slot_") == 0) {   // a tap on a bank: browse it
+                int b = atoi(k.c_str() + 10) - 1;
+                if (b >= 0 && b < banks().n && b != browseBank) browseBank = b, ++displayRev;
+            } else if (k.compare(0, 11, "patch_slot_") == 0) {   // a tap on a patch: load it (the loaded one: nothing)
+                int i = atoi(k.c_str() + 11) - 1;
+                const std::vector<int> &ps = banks().patches[browseBank];
+                if (i >= 0 && i < (int)ps.size() && ps[i] != preset) loadPreset(ps[i]);
+            }
             else if (int n = shapeOsc(k)) {
                 RangedAudioParameter *p = shapeParam(n);
                 if (p) odin.m_value_tree.setValue(p, p->convertFrom0to1(v));
@@ -506,6 +586,9 @@ struct Instance {
             if (k == "polyphony") return (float)ceiling;
             if (k == "voices") return (float)voiceLimit;
             if (k == "tune") return (tuneHz - TUNE_LO) / (TUNE_HI - TUNE_LO);
+            if (k == "theme") return (float)theme;
+            if (k == "browse_bank") return (float)browseBank;
+            if (k == "browse_patch") return (float)(browseIndex() < 0 ? 0 : browseIndex());
             if (k == "cpu") return (float)cpuShown;
             if (k == "eco") return (float)eco;
             if (k == "eco_active") return ecoActive() ? 1.f : 0.f;
@@ -636,10 +719,13 @@ int get_param(void *inst, const char *key, char *buf, int len) {
     Instance *s = (Instance *)inst;
     if (!strcmp(key, "state")) return snprintf(buf, len, "%s", s->saveState().c_str());
     if (!strcmp(key, "display_rev")) return snprintf(buf, len, "%u", s->displayRev);
-    if (!strcmp(key, "preset_name")) {
-        const BankEntry &b = BANK[s->preset];
-        return snprintf(buf, len, "%s / %s", b.category, b.name);
+    if (!strcmp(key, "browse_bank_display")) return snprintf(buf, len, "%s", banks().name[s->browseBank]);
+    if (!strcmp(key, "browse_patch_display")) {
+        int at = s->browseIndex();
+        return snprintf(buf, len, "%s", at < 0 ? "-" : BANK[s->preset].name);
     }
+    if (!strcmp(key, "bank_name")) return snprintf(buf, len, "%s", banks().name[s->browseBank]);
+    if (!strcmp(key, "preset_name")) return snprintf(buf, len, "%s", BANK[s->preset].name);   // its bank: BROWSE
     if (!strcmp(key, "preset_count")) return snprintf(buf, len, "%d", NBANK);
     if (!strcmp(key, "voices_active")) return snprintf(buf, len, "%d", s->lastActive);   // tools
     if (!strcmp(key, "notes_held")) {   // tools: how many keys have a voice sounding, not released
@@ -673,6 +759,20 @@ int get_param(void *inst, const char *key, char *buf, int len) {
         return 0;
     }
     if (!strcmp(key, "tune_display")) return snprintf(buf, len, "%.1f Hz", s->tuneHz);
+    if (!strncmp(key, "bank_slot_", 10) || !strncmp(key, "patch_slot_", 11)) {   // BROWSE list tiles
+        bool bank = key[0] == 'b';
+        const char *rest = key + (bank ? 10 : 11);
+        int i = atoi(rest) - 1;
+        bool on = strstr(rest, "_on") != nullptr;
+        const Banks &bk = banks();
+        if (bank) {
+            if (i < 0 || i >= bk.n) return on ? snprintf(buf, len, "0") : snprintf(buf, len, " ");
+            return on ? snprintf(buf, len, "%d", i == s->browseBank) : snprintf(buf, len, "%s", bk.name[i]);
+        }
+        const std::vector<int> &ps = bk.patches[s->browseBank];
+        if (i < 0 || i >= (int)ps.size()) return on ? snprintf(buf, len, "0") : snprintf(buf, len, " ");
+        return on ? snprintf(buf, len, "%d", ps[i] == s->preset) : snprintf(buf, len, "%s", BANK[ps[i]].name);
+    }
     if (kl > 8 && !strcmp(key + kl - 8, "_display")) {
         auto it = s->index.find(std::string(key, kl - 8));
         if (it == s->index.end() || CONTROLS[it->second].kind != K_NORM) return 0;
@@ -681,7 +781,8 @@ int get_param(void *inst, const char *key, char *buf, int len) {
     auto it = s->index.find(key);
     if (it == s->index.end()) return 0;
     const Control &c = CONTROLS[it->second];
-    if (c.kind == K_NORM) return snprintf(buf, len, "%.6f", s->get(c));
+    // continuous controls read back unrounded (an OSC SHAPE knob or TUNE read as 0/1 jumped under a Q-Link in 1.2-1.3)
+    if (c.kind == K_NORM || s->shapeOsc(c.key) || !strcmp(c.key, "tune")) return snprintf(buf, len, "%.6f", s->get(c));
     return snprintf(buf, len, "%d", (int)std::lround(s->get(c)));
 }
 

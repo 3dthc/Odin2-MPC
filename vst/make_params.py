@@ -41,7 +41,34 @@ LFO_WAVES = ["Sine", "Saw", "Triangle", "Square 50", "Square 25", "Square 12", "
              "WaveDraw 1", "WaveDraw 2", "WaveDraw 3", "ChipDraw 1", "ChipDraw 2", "ChipDraw 3"]
 DIST_ALGOS = [("Clamp", 1), ("Fold", 2), ("Zero", 3)]
 UNISON = [("1", 1), ("2", 2), ("3", 3), ("4", 4), ("6", 6), ("12", 12)]
-PLAY_MODES = ["Legato", "Poly", "Retrig"]   # tree "legato" = 0, 1, 2 (Odin's PLAYMODETOVALUETREE)
+PLAY_MODES = ["Legato", "Poly", "Retrig"]
+THEMES = ["Odin Blue", "2000", "2500", "3000"]   # vst/make_skin.py draws one look per entry, in this order
+BANK_SLOTS, PATCH_SLOTS = 16, 30
+BROWSE_TICKS = 5   # Q-Link moves per bank/patch step on BROWSE
+
+# 1.4: the names MPC shows under knobs and in its Q-Link panel (a skin's own labels are not used): short, upper case,
+# the same pattern everywhere (what it is, then which one), so they read evenly. Projects store values by index, so
+# names can change freely.
+NAMES = {"master": "MASTER", "glide": "GLIDE", "uni_detune": "DETUNE", "uni_width": "WIDTH", "tune": "TUNE A4",
+         "amp_vel": "VELOCITY", "bend": "BEND", "dist_boost": "DISTORT", "dist_mix": "DIST MIX",
+         "delay_time": "DELAY TIME", "delay_fb": "FEEDBACK", "delay_wet": "DELAY MIX",
+         "reverb_size": "HALL SIZE", "reverb_damp": "DAMPING", "reverb_mix": "REVERB MIX",
+         "chorus_rate": "CHORUS RATE", "chorus_amt": "CHORUS AMT", "chorus_mix": "CHORUS MIX",
+         "phaser_rate": "PHASER RATE", "phaser_amt": "PHASER AMT", "phaser_mix": "PHASER MIX",
+         "flanger_rate": "FLANGE RATE", "flanger_amt": "FLANGE AMT", "flanger_mix": "FLANGE MIX",
+         "lfo1_rate": "LFO 1 RATE", "lfo2_rate": "LFO 2 RATE", "lfo3_rate": "LFO 3 RATE", "lfo4_rate": "GLOBAL LFO",
+         "env1_a": "ATTACK", "env1_d": "DECAY", "env1_s": "SUSTAIN", "env1_r": "RELEASE"}
+for _n in (1, 2, 3):
+    NAMES.update({"osc%d_vol" % _n: "VOLUME %d" % _n, "osc%d_oct" % _n: "OCTAVE %d" % _n, "osc%d_semi" % _n: "SEMI %d" % _n,
+                  "osc%d_fine" % _n: "FINE %d" % _n, "osc%d_vecy" % _n: "VECTOR Y %d" % _n,
+                  "osc%d_cratio" % _n: "C RATIO %d" % _n, "osc%d_mratio" % _n: "M RATIO %d" % _n,
+                  "osc%d_hp" % _n: "HIGHPASS %d" % _n,
+                  "fil%d_freq" % _n: "CUTOFF %d" % _n, "fil%d_res" % _n: "RESO %d" % _n, "fil%d_env" % _n: "ENV %d" % _n,
+                  "fil%d_kbd" % _n: "KEY %d" % _n, "fil%d_vel" % _n: "VELOCITY %d" % _n, "fil%d_sem" % _n: "SHAPE F%d" % _n,
+                  "fil%d_formant" % _n: "VOWEL %d" % _n, "fil%d_ring" % _n: "RING %d" % _n, "fil%d_sat" % _n: "SATURATE %d" % _n})
+for _n, _p in ((2, "F"), (3, "M")):
+    NAMES.update({"env%d_a" % _n: _p + "-ATTACK", "env%d_d" % _n: _p + "-DECAY", "env%d_s" % _n: _p + "-SUSTAIN",
+                  "env%d_r" % _n: _p + "-RELEASE"})   # tree "legato" = 0, 1, 2 (Odin's PLAYMODETOVALUETREE)
 
 # fmt (how the engine prints a norm value): hz, sec, db, pct, bip (-100..100 %), ct (cents), x (plain number)
 P = []   # (key, name, kind, target, extra)
@@ -76,8 +103,8 @@ def special(key, name, **kw):
 special("polyphony", "Polyphony", display="int")
 special("preset", "Preset", display="int")
 special("preset_name", "Patch", display="string")
-special("preset_prev", "Prev Patch", momentary=True, step_of="preset", step_delta=-1)
-special("preset_next", "Next Patch", momentary=True, step_of="preset", step_delta=1)
+special("preset_prev", "Prev Patch", momentary=True)   # 1.4: within the bank (the engine steps it)
+special("preset_next", "Next Patch", momentary=True)
 special("panic", "Stop", momentary=True)
 special("cpu", "CPU")
 
@@ -196,12 +223,22 @@ for n in (1, 2, 3):
     special("osc%d_shape" % n, "Osc%d Shape" % n)
 special("voices", "Voices")   # read-only: how many voices the budget lets sound now (1.3)
 special("tune", "Master Tune")   # A4 = 415..465 Hz, 440 in the middle; the plugin's, kept across patches (1.3)
+special("theme", "Theme", options=THEMES)   # the page's look, the plugin's own (1.4)
+for i in range(1, BANK_SLOTS + 1):   # BROWSE: the banks (patch categories), one list tile each (1.4)
+    special("bank_slot_%d" % i, "Bank %d" % i)
+for i in range(1, PATCH_SLOTS + 1):  # BROWSE: the patches of the bank being browsed (1.4)
+    special("patch_slot_%d" % i, "Patch %d" % i)
+special("bank_name", "Bank", display="string")   # the top bar's bank, with its own arrows (1.4)
+special("bank_prev", "Prev Bank", momentary=True)
+special("bank_next", "Next Bank", momentary=True)
+special("browse_bank", "BANK")     # BROWSE Q-Link 1: the bank only (1.4.1)
+special("browse_patch", "PATCH")   # BROWSE Q-Link 2: a patch of that bank only (1.4.1)
 
 
 def build():
     params, rows = [], []
     for key, name, kind, target, ex in P:
-        p = {"key": key, "name": name}
+        p = {"key": key, "name": NAMES.get(key, name)}
         if kind == "norm":
             p.update({"min": 0.0, "max": 1.0, "dynamic_display": True})
         elif kind == "int":
@@ -217,8 +254,14 @@ def build():
                 p.update({"min": 0, "max": 9999, "display": "int", "nudge_pct": 10})   # max rewritten from the bank
             elif key == "preset_name":
                 p.update({"display": "string", "poll": False})
-            elif key in ("preset_prev", "preset_next"):
-                p.update({"momentary": True, "step_of": "preset", "step_delta": ex["step_delta"]})
+            elif key in ("preset_prev", "preset_next", "bank_prev", "bank_next"):
+                p.update({"momentary": True})
+            elif key in ("browse_bank", "browse_patch"):
+                # whole steps, one per BROWSE_TICKS Q-Link moves (a calm scroll); the name shows as the value
+                p.update({"min": 0, "max": PATCH_SLOTS - 1, "display": "int", "qlink_ticks": BROWSE_TICKS,
+                          "dynamic_display": True})
+            elif key == "bank_name":
+                p.update({"display": "string", "poll": False})
             elif key == "panic":
                 p.update({"momentary": True, "hold_ms": 250})
             elif key == "cpu":
@@ -227,6 +270,10 @@ def build():
                 p.update({"min": 1, "max": 24, "display": "int", "default": 16})
             elif key == "voices":
                 p.update({"display": "string"})
+            elif key == "theme":
+                p.update({"options": ex["options"]})
+            elif key.startswith(("bank_slot_", "patch_slot_")):   # list tiles: text = a name, "<key>_on" = selected
+                p.update({"min": 0, "max": 1, "display": "string"})
             elif key == "tune":
                 p.update({"min": 0.0, "max": 1.0, "default": 0.5, "dynamic_display": True})
             elif key == "playmode":
@@ -252,12 +299,8 @@ def main():
     for p in params:
         if p["key"] == "preset":
             p["max"] = len(bank["presets"]) - 1
-    # text that follows another param asks MPC to re-read the screen when that param is written (mpc-vst-plugins
-    # 2026-10-21: plain host writes no longer do): the shape knob's name and value follow its oscillator's type, and the
-    # unpolled preset name follows the preset number
-    for p in params:
-        if p["key"] in ("osc1_type", "osc2_type", "osc3_type", "preset"):
-            p["refresh_display"] = True
+        if p["key"] == "browse_bank":
+            p["max"] = len({q["category"] for q in bank["presets"]}) - 1
     out = {"name": "Odin 2", "params": params}
     with open(os.path.join(HERE, "params.json"), "w") as f:
         json.dump(out, f, indent=1)

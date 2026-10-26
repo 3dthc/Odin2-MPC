@@ -1,5 +1,14 @@
-![Odin 2 on the MPC Live II](odin2-mpc-main.png)
 # Odin 2 for MPC
+
+![Odin 2 on the MPC Live II: MAIN page](docs/screenshots/main.png)
+
+| OSC | FILTER | BROWSE |
+|---|---|---|
+| ![OSC](docs/screenshots/osc.png) | ![FILTER](docs/screenshots/filter.png) | ![BROWSE](docs/screenshots/browse.png) |
+
+**Four themes, switched live:** Odin Blue, 2000, 2500, 3000
+
+![The four themes](docs/screenshots/themes.png)
 
 [Odin 2](https://github.com/TheWaveWarden/odin2), TheWaveWarden's semi-modular synthesizer, as a native
 VST2 instrument for Akai MPC OS standalone devices (built for a Gen 1 MPC Live II), with its own touchscreen pages in
@@ -11,28 +20,37 @@ for the MPC's ARM processor without JUCE. Odin's 261 factory patches are built i
 
 ## What's on the MPC
 
-Five pages, laid out for playing standing up on a 4-knob MPC (Live II): each page is four columns of four big
+Six pages, laid out for playing standing up on a 4-knob MPC (Live II): each sound page is four columns of four big
 knobs, and each column is one Q-Link column, so the four Q-Links turn exactly the four knobs outlined on screen
-(press the Q-Link button to move to the next column). Knobs carry a ring in Odin blue that shows their position from
-across the room; names and values are drawn large. Choices you set and leave (types, routing, play mode) are in the
-panel on the right, where MPC's Q-Link panel slides in while you turn a Q-Link.
+(press the Q-Link button to move to the next column). Every knob shows a short name (CUTOFF 1, ATTACK, DELAY MIX…)
+and its value on a dark plate, the same size on every page. Choices you set and leave (types, routing, play mode)
+are in the panel on the right, where MPC's Q-Link panel slides in while you turn a Q-Link.
 
-- **Top bar (every page):** ECO and its light, the patch browser (◀ name ▶, also in MPC's PRESET menu), VOICES
-  (how many voices the patch can sound right now; Odin sets it, see below), the CPU meter, STOP.
+- **Top bar (every page):** ECO and its light, **BANK ◀ name ▶** (the arrows change the bank only, the sound stays),
+  **PATCH ◀ name ▶** (the patches of that bank), VOICES (how many voices the patch can sound now; Odin sets it,
+  see below), the CPU meter, STOP. Patches are also in MPC's PRESET menu.
 - **MAIN:** Voice (master, glide, unison detune and width), Filter 1 (cutoff, resonance, envelope, key follow, and
   its type), the amp envelope, Space (delay and reverb amounts, with their on buttons). Right: play mode, unison
   voices, velocity, bend range, arpeggiator.
-- **OSC:** oscillators 1–3 (volume, SHAPE, octave, semitone; the type picker on top), fine tune for all three plus
-  **TUNE A4**, the master tune (415–465 Hz, 440 in the middle; it belongs to the plugin, so it stays when you change
-  patches, and is saved with the project; new notes take it). Glide is on MAIN. **SHAPE** turns whatever matters for the oscillator's type and is named after it: PW (analog), POSITION
-  (wavetable, multi), VECTOR X, FM/PM AMOUNT, LOWPASS (noise). Each type's extra choice sits under its knobs (analog
-  wave, wavetable, chip wave and noise, FM/PM ratios, vector Y, noise high-pass). Right: unison.
+- **OSC:** oscillators 1–3 (volume, SHAPE, octave, semitone; the type picker on top; the type's own choice in the
+  dark window at the bottom), fine tune for all three plus **TUNE A4**, the master tune (415–465 Hz, 440 in the
+  middle; it belongs to the plugin, so it stays when you change patches, and is saved with the project; new notes
+  take it). **SHAPE** turns whatever matters for the oscillator's type and is named after it: PW (analog), POSITION
+  (wavetable, multi), VECTOR X, FM/PM AMOUNT, LOWPASS (noise). Right: unison.
 - **FILTER:** filters 1 and 2 (per voice) and 3 (on the stereo sum): cutoff, resonance, envelope, key follow, plus
-  velocity and the type's own control (SEM shape, formant vowel, ring-mod amount); Drive (filter saturation,
-  distortion amount and mix). Right: routing (which oscillators feed each filter, filter 1 into 2, which filters
-  reach the amp) and the distortion type.
+  velocity and the type's own control (SEM shape, formant vowel, ring-mod amount) in the bottom window; Drive (filter
+  saturation, distortion amount and mix). Right: routing and the distortion type.
 - **ENV:** amp, filter and mod envelopes (A/D/S/R), the four LFO rates. Right: the LFO waves.
 - **FX:** delay, reverb, chorus, phaser, each with its on button. Right: flanger.
+- **BROWSE:** the banks on the left, the chosen bank's patches on the right, as big tiles: tap a bank to see its
+  patches, tap a patch to load it. Bottom left: **THEME**. Q-Link 1 scrolls the banks only and Q-Link 2 the patches of that bank only, one
+  step per few clicks so they don't race.
+
+**Themes** (switch any time; saved with the project, kept when you change patches): **Odin Blue** (Odin 2's own
+look, the default), and three homages to classic MPCs drawn from scratch (no Akai logos or artwork): **2000**
+(warm light grey, dark label bands, red accents), **2500** (charcoal, silver edges, blue displays) and **3000** (cream
+and taupe, red accents, a violin and music notes). The skin's images take about 112 MB of the MPC's memory with all
+four looks (1.3: 66 MB).
 
 Left out because they are awkward on a touchscreen or rarely touched live (the patch still has them, factory
 patches set them, projects keep them): the mod matrix, the arpeggiator's step editor, drawing waveforms, vector
@@ -89,11 +107,17 @@ cd ~/odin2-mpc
 ./build.sh
 ```
 
-That runs the kit's `tools/build_port.sh` (the armhf compile in the `arm32v7/gcc:11-bullseye` container, the skin
-in the `mpc-vst-html-art` container) and packages the result with the kit's `tools/release.py` as
-`dist/Odin-2-1.3.0-mpc-armv7.zip`. The first build is slow (allow 20–40 minutes): the compiler runs under ARM
-emulation, and Odin's wavetable data is one very large file. If `mpc-vst-plugins` is somewhere else, run
-`MPC_VST=/path/to/mpc-vst-plugins ./build.sh`.
+The first run downloads Debian bullseye and its ARM cross compiler into Docker once (a few minutes). After that a
+full build takes a few minutes on a typical PC and a small change seconds: the plugin is compiled natively on every
+core with the cross compiler (`tools/cross/Dockerfile`, `tools/arm.mk`; the same glibc 2.31 as the kit's own image,
+so the plugin loads on MPC OS 2.x and 3.x), only what changed is recompiled, and the skin is rebuilt only when the
+pages or their artwork changed (in the kit's `mpc-vst-html-art` container). The result is packaged with the kit's
+`tools/release.py` as `dist/Odin-2-1.4.1-mpc-armv7.zip`.
+
+`SLOW=1 ./build.sh` builds the kit's way instead (`tools/build_port.sh`: the compiler under ARM emulation, 30-60
+minutes). If `mpc-vst-plugins` is somewhere else, run `MPC_VST=/path/to/mpc-vst-plugins ./build.sh`. If Docker
+says "exec format error" (only the SLOW build and the kit's screenshot tool emulate ARM), run
+`docker run --privileged --rm tonistiigi/binfmt --install arm` once.
 
 ## Install on the MPC
 
@@ -102,19 +126,19 @@ registers it and starts MPC again. **Save your project first.** From Ubuntu, wit
 
 ```
 cd ~/odin2-mpc/dist
-unzip Odin-2-1.3.0-mpc-armv7.zip
-scp -r Odin-2-1.3.0 root@<mpc-ip>:/tmp/
-ssh root@<mpc-ip> sh /tmp/Odin-2-1.3.0/install.sh
+unzip Odin-2-1.4.1-mpc-armv7.zip
+scp -r Odin-2-1.4.1 root@<mpc-ip>:/tmp/
+ssh root@<mpc-ip> sh /tmp/Odin-2-1.4.1/install.sh
 ```
 
 `INSTALL.md` in the zip has the same steps and the manual ones (copy the folder, edit `MPC.settings` yourself with
 MPC stopped). The plugin shows up as **Odin 2** (manufacturer 3dthc) in MPC's plugin browser.
-`ssh root@<mpc-ip> sh /tmp/Odin-2-1.3.0/uninstall.sh` removes it again.
+`ssh root@<mpc-ip> sh /tmp/Odin-2-1.4.1/uninstall.sh` removes it again.
 
 ## First test on the device
 
 1. Insert Odin 2 on a track and play a few notes (the Init patch).
-2. Step through some patches with ◀ ▶ and from the PRESET menu.
+2. Step banks and patches with the top bar's arrows, on BROWSE, and from the PRESET menu; switch THEME on BROWSE.
 3. Hold a big chord on a heavy patch (Antarctica [RS], Alien Chaos2): VOICES shows what it allows, CPU stays out
    of the red, and it plays without crackling.
 4. Press STOP while a long reverb/delay tail is ringing.
@@ -129,7 +153,9 @@ MPC stopped). The plugin shows up as **Odin 2** (manufacturer 3dthc) in MPC's pl
 | `build.sh` | build and package (above) |
 | `vst/vst.json` | the port's build description for mpc-vst-plugins |
 | `vst/make_params.py` → `vst/params.json`, `src/odin_mpc_params.inc` | the controls the MPC sees and the Odin state each drives |
-| `vst/make_skin.py` → `vst/layout.conf`, `vst/art/gen/` | the pages, drawn from Odin's artwork in `vst/art/odin/` |
+| `vst/make_skin.py` → `vst/layout.conf`, `vst/art/gen/` | the pages in the four looks (Odin's artwork in `vst/art/odin/`) |
+| `vst/skin_post.py` | a touch-up to the built skin: the Q-Link column outline below the larger value text |
+| `tools/device_preview.py`, `tools/dump_values.cpp` | previews of the built pages with a patch's real values and live text (dev) |
 | `src/odin_mpc.cpp` | the engine the kit's VST2 wrapper drives: controls, patches, project state, voice budget, ECO, STOP, CPU meter |
 | `src/odin_state.h` | a patch as text lines (the bank and the project state store differences) |
 | `src/presets/` | the factory bank, generated by `tools/make_bank.sh` from `presets_src/`, and each patch's measured load (`bank_cost.inc`, generated by `tools/patch_cost.sh`) |
@@ -144,4 +170,4 @@ at the end of `make_params.py`.
 ## Licences
 
 GPL-3.0-or-later (`LICENSE`), as Odin 2. Odin 2 and its artwork and patches are by TheWaveWarden and contributors.
-The Aldrich font is under the SIL Open Font License (`vst/art/fonts/OFL.txt`). Surge's tuning library is MIT.
+The Aldrich and Titillium Web fonts are under the SIL Open Font License (`vst/art/fonts/OFL.txt`, `OFL-TitilliumWeb.txt`). Surge's tuning library is MIT.

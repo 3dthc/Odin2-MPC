@@ -15,8 +15,7 @@
    "min": 0,
    "max": 260,
    "display": "int",
-   "nudge_pct": 10,
-   "refresh_display": true
+   "nudge_pct": 10
   },
   {
    "key": "preset_name",
@@ -27,16 +26,12 @@
   {
    "key": "preset_prev",
    "name": "Prev Patch",
-   "momentary": true,
-   "step_of": "preset",
-   "step_delta": -1
+   "momentary": true
   },
   {
    "key": "preset_next",
    "name": "Next Patch",
-   "momentary": true,
-   "step_of": "preset",
-   "step_delta": 1
+   "momentary": true
   },
   {
    "key": "panic",
@@ -67,33 +62,32 @@
     "WaveDraw",
     "ChipDraw",
     "SpecDraw"
-   ],
-   "refresh_display": true
+   ]
   },
   {
    "key": "osc1_oct",
-   "name": "Osc1 Octave",
+   "name": "OCTAVE 1",
    "min": -4,
    "max": 4,
    "display": "int"
   },
   {
    "key": "osc1_semi",
-   "name": "Osc1 Semi",
+   "name": "SEMI 1",
    "min": -12,
    "max": 12,
    "display": "int"
   },
   {
    "key": "osc1_fine",
-   "name": "Osc1 Fine",
+   "name": "FINE 1",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "osc1_vol",
-   "name": "Osc1 Volume",
+   "name": "VOLUME 1",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -207,7 +201,7 @@
   },
   {
    "key": "osc1_vecy",
-   "name": "Osc1 Vector Y",
+   "name": "VECTOR Y 1",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -241,14 +235,14 @@
   },
   {
    "key": "osc1_cratio",
-   "name": "Osc1 Carrier",
+   "name": "C RATIO 1",
    "min": 1,
    "max": 16,
    "display": "int"
   },
   {
    "key": "osc1_mratio",
-   "name": "Osc1 Modulator",
+   "name": "M RATIO 1",
    "min": 1,
    "max": 16,
    "display": "int"
@@ -262,7 +256,7 @@
   },
   {
    "key": "osc1_hp",
-   "name": "Osc1 Noise HP",
+   "name": "HIGHPASS 1",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -283,33 +277,32 @@
     "WaveDraw",
     "ChipDraw",
     "SpecDraw"
-   ],
-   "refresh_display": true
+   ]
   },
   {
    "key": "osc2_oct",
-   "name": "Osc2 Octave",
+   "name": "OCTAVE 2",
    "min": -4,
    "max": 4,
    "display": "int"
   },
   {
    "key": "osc2_semi",
-   "name": "Osc2 Semi",
+   "name": "SEMI 2",
    "min": -12,
    "max": 12,
    "display": "int"
   },
   {
    "key": "osc2_fine",
-   "name": "Osc2 Fine",
+   "name": "FINE 2",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "osc2_vol",
-   "name": "Osc2 Volume",
+   "name": "VOLUME 2",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -423,7 +416,7 @@
   },
   {
    "key": "osc2_vecy",
-   "name": "Osc2 Vector Y",
+   "name": "VECTOR Y 2",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -457,14 +450,14 @@
   },
   {
    "key": "osc2_cratio",
-   "name": "Osc2 Carrier",
+   "name": "C RATIO 2",
    "min": 1,
    "max": 16,
    "display": "int"
   },
   {
    "key": "osc2_mratio",
-   "name": "Osc2 Modulator",
+   "name": "M RATIO 2",
    "min": 1,
    "max": 16,
    "display": "int"
@@ -478,7 +471,7 @@
   },
   {
    "key": "osc2_hp",
-   "name": "Osc2 Noise HP",
+   "name": "HIGHPASS 2",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -499,33 +492,32 @@
     "WaveDraw",
     "ChipDraw",
     "SpecDraw"
-   ],
-   "refresh_display": true
+   ]
   },
   {
    "key": "osc3_oct",
-   "name": "Osc3 Octave",
+   "name": "OCTAVE 3",
    "min": -4,
    "max": 4,
    "display": "int"
   },
   {
    "key": "osc3_semi",
-   "name": "Osc3 Semi",
+   "name": "SEMI 3",
    "min": -12,
    "max": 12,
    "display": "int"
   },
   {
    "key": "osc3_fine",
-   "name": "Osc3 Fine",
+   "name": "FINE 3",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "osc3_vol",
-   "name": "Osc3 Volume",
+   "name": "VOLUME 3",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -639,7 +631,7 @@
   },
   {
    "key": "osc3_vecy",
-   "name": "Osc3 Vector Y",
+   "name": "VECTOR Y 3",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -673,14 +665,14 @@
   },
   {
    "key": "osc3_cratio",
-   "name": "Osc3 Carrier",
+   "name": "C RATIO 3",
    "min": 1,
    "max": 16,
    "display": "int"
   },
   {
    "key": "osc3_mratio",
-   "name": "Osc3 Modulator",
+   "name": "M RATIO 3",
    "min": 1,
    "max": 16,
    "display": "int"
@@ -694,7 +686,7 @@
   },
   {
    "key": "osc3_hp",
-   "name": "Osc3 Noise HP",
+   "name": "HIGHPASS 3",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -721,35 +713,35 @@
   },
   {
    "key": "fil1_freq",
-   "name": "Filter1 Freq",
+   "name": "CUTOFF 1",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil1_res",
-   "name": "Filter1 Reso",
+   "name": "RESO 1",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil1_env",
-   "name": "Filter1 Env",
+   "name": "ENV 1",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil1_kbd",
-   "name": "Filter1 Kbd",
+   "name": "KEY 1",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil1_vel",
-   "name": "Filter1 Vel",
+   "name": "VELOCITY 1",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -763,28 +755,28 @@
   },
   {
    "key": "fil1_sat",
-   "name": "Filter1 Saturation",
+   "name": "SATURATE 1",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil1_sem",
-   "name": "Filter1 SEM Shape",
+   "name": "SHAPE F1",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil1_formant",
-   "name": "Filter1 Vowel",
+   "name": "VOWEL 1",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil1_ring",
-   "name": "Filter1 Ring Amt",
+   "name": "RING 1",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -811,35 +803,35 @@
   },
   {
    "key": "fil2_freq",
-   "name": "Filter2 Freq",
+   "name": "CUTOFF 2",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil2_res",
-   "name": "Filter2 Reso",
+   "name": "RESO 2",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil2_env",
-   "name": "Filter2 Env",
+   "name": "ENV 2",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil2_kbd",
-   "name": "Filter2 Kbd",
+   "name": "KEY 2",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil2_vel",
-   "name": "Filter2 Vel",
+   "name": "VELOCITY 2",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -853,28 +845,28 @@
   },
   {
    "key": "fil2_sat",
-   "name": "Filter2 Saturation",
+   "name": "SATURATE 2",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil2_sem",
-   "name": "Filter2 SEM Shape",
+   "name": "SHAPE F2",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil2_formant",
-   "name": "Filter2 Vowel",
+   "name": "VOWEL 2",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil2_ring",
-   "name": "Filter2 Ring Amt",
+   "name": "RING 2",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -901,35 +893,35 @@
   },
   {
    "key": "fil3_freq",
-   "name": "Filter3 Freq",
+   "name": "CUTOFF 3",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil3_res",
-   "name": "Filter3 Reso",
+   "name": "RESO 3",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil3_env",
-   "name": "Filter3 Env",
+   "name": "ENV 3",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil3_kbd",
-   "name": "Filter3 Kbd",
+   "name": "KEY 3",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil3_vel",
-   "name": "Filter3 Vel",
+   "name": "VELOCITY 3",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -943,28 +935,28 @@
   },
   {
    "key": "fil3_sat",
-   "name": "Filter3 Saturation",
+   "name": "SATURATE 3",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil3_sem",
-   "name": "Filter3 SEM Shape",
+   "name": "SHAPE F3",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil3_formant",
-   "name": "Filter3 Vowel",
+   "name": "VOWEL 3",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "fil3_ring",
-   "name": "Filter3 Ring Amt",
+   "name": "RING 3",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -1057,7 +1049,7 @@
   },
   {
    "key": "amp_vel",
-   "name": "Amp Velocity",
+   "name": "VELOCITY",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -1081,105 +1073,105 @@
   },
   {
    "key": "dist_boost",
-   "name": "Dist Boost",
+   "name": "DISTORT",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "dist_mix",
-   "name": "Dist Mix",
+   "name": "DIST MIX",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "env1_a",
-   "name": "Amp Env A",
+   "name": "ATTACK",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "env1_d",
-   "name": "Amp Env D",
+   "name": "DECAY",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "env1_s",
-   "name": "Amp Env S",
+   "name": "SUSTAIN",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "env1_r",
-   "name": "Amp Env R",
+   "name": "RELEASE",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "env2_a",
-   "name": "Filter Env A",
+   "name": "F-ATTACK",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "env2_d",
-   "name": "Filter Env D",
+   "name": "F-DECAY",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "env2_s",
-   "name": "Filter Env S",
+   "name": "F-SUSTAIN",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "env2_r",
-   "name": "Filter Env R",
+   "name": "F-RELEASE",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "env3_a",
-   "name": "Mod Env A",
+   "name": "M-ATTACK",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "env3_d",
-   "name": "Mod Env D",
+   "name": "M-DECAY",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "env3_s",
-   "name": "Mod Env S",
+   "name": "M-SUSTAIN",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "env3_r",
-   "name": "Mod Env R",
+   "name": "M-RELEASE",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "lfo1_rate",
-   "name": "LFO1 Rate",
+   "name": "LFO 1 RATE",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -1215,7 +1207,7 @@
   },
   {
    "key": "lfo2_rate",
-   "name": "LFO2 Rate",
+   "name": "LFO 2 RATE",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -1251,7 +1243,7 @@
   },
   {
    "key": "lfo3_rate",
-   "name": "LFO3 Rate",
+   "name": "LFO 3 RATE",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -1287,7 +1279,7 @@
   },
   {
    "key": "lfo4_rate",
-   "name": "Global LFO Rate",
+   "name": "GLOBAL LFO",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -1331,21 +1323,21 @@
   },
   {
    "key": "delay_time",
-   "name": "Delay Time",
+   "name": "DELAY TIME",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "delay_fb",
-   "name": "Delay Feedback",
+   "name": "FEEDBACK",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "delay_wet",
-   "name": "Delay Wet",
+   "name": "DELAY MIX",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -1368,21 +1360,21 @@
   },
   {
    "key": "chorus_rate",
-   "name": "Chorus Rate",
+   "name": "CHORUS RATE",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "chorus_amt",
-   "name": "Chorus Amount",
+   "name": "CHORUS AMT",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "chorus_mix",
-   "name": "Chorus Mix",
+   "name": "CHORUS MIX",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -1397,21 +1389,21 @@
   },
   {
    "key": "phaser_rate",
-   "name": "Phaser Rate",
+   "name": "PHASER RATE",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "phaser_amt",
-   "name": "Phaser Amount",
+   "name": "PHASER AMT",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "phaser_mix",
-   "name": "Phaser Mix",
+   "name": "PHASER MIX",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -1426,21 +1418,21 @@
   },
   {
    "key": "flanger_rate",
-   "name": "Flanger Rate",
+   "name": "FLANGE RATE",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "flanger_amt",
-   "name": "Flanger Amount",
+   "name": "FLANGE AMT",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "flanger_mix",
-   "name": "Flanger Mix",
+   "name": "FLANGE MIX",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -1455,35 +1447,35 @@
   },
   {
    "key": "reverb_size",
-   "name": "Reverb Hall",
+   "name": "HALL SIZE",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "reverb_damp",
-   "name": "Reverb Damp",
+   "name": "DAMPING",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "reverb_mix",
-   "name": "Reverb Mix",
+   "name": "REVERB MIX",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "master",
-   "name": "Master",
+   "name": "MASTER",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "glide",
-   "name": "Glide",
+   "name": "GLIDE",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
@@ -1512,21 +1504,21 @@
   },
   {
    "key": "uni_detune",
-   "name": "Uni Detune",
+   "name": "DETUNE",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "uni_width",
-   "name": "Uni Width",
+   "name": "WIDTH",
    "min": 0.0,
    "max": 1.0,
    "dynamic_display": true
   },
   {
    "key": "bend",
-   "name": "Bend Range",
+   "name": "BEND",
    "min": 0,
    "max": 24,
    "display": "int"
@@ -1589,10 +1581,376 @@
   },
   {
    "key": "tune",
-   "name": "Master Tune",
+   "name": "TUNE A4",
    "min": 0.0,
    "max": 1.0,
    "default": 0.5,
+   "dynamic_display": true
+  },
+  {
+   "key": "theme",
+   "name": "Theme",
+   "options": [
+    "Odin Blue",
+    "2000",
+    "2500",
+    "3000"
+   ]
+  },
+  {
+   "key": "bank_slot_1",
+   "name": "Bank 1",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_slot_2",
+   "name": "Bank 2",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_slot_3",
+   "name": "Bank 3",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_slot_4",
+   "name": "Bank 4",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_slot_5",
+   "name": "Bank 5",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_slot_6",
+   "name": "Bank 6",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_slot_7",
+   "name": "Bank 7",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_slot_8",
+   "name": "Bank 8",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_slot_9",
+   "name": "Bank 9",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_slot_10",
+   "name": "Bank 10",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_slot_11",
+   "name": "Bank 11",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_slot_12",
+   "name": "Bank 12",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_slot_13",
+   "name": "Bank 13",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_slot_14",
+   "name": "Bank 14",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_slot_15",
+   "name": "Bank 15",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_slot_16",
+   "name": "Bank 16",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_1",
+   "name": "Patch 1",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_2",
+   "name": "Patch 2",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_3",
+   "name": "Patch 3",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_4",
+   "name": "Patch 4",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_5",
+   "name": "Patch 5",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_6",
+   "name": "Patch 6",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_7",
+   "name": "Patch 7",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_8",
+   "name": "Patch 8",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_9",
+   "name": "Patch 9",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_10",
+   "name": "Patch 10",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_11",
+   "name": "Patch 11",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_12",
+   "name": "Patch 12",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_13",
+   "name": "Patch 13",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_14",
+   "name": "Patch 14",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_15",
+   "name": "Patch 15",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_16",
+   "name": "Patch 16",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_17",
+   "name": "Patch 17",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_18",
+   "name": "Patch 18",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_19",
+   "name": "Patch 19",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_20",
+   "name": "Patch 20",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_21",
+   "name": "Patch 21",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_22",
+   "name": "Patch 22",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_23",
+   "name": "Patch 23",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_24",
+   "name": "Patch 24",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_25",
+   "name": "Patch 25",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_26",
+   "name": "Patch 26",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_27",
+   "name": "Patch 27",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_28",
+   "name": "Patch 28",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_29",
+   "name": "Patch 29",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "patch_slot_30",
+   "name": "Patch 30",
+   "min": 0,
+   "max": 1,
+   "display": "string"
+  },
+  {
+   "key": "bank_name",
+   "name": "Bank",
+   "display": "string",
+   "poll": false
+  },
+  {
+   "key": "bank_prev",
+   "name": "Prev Bank",
+   "momentary": true
+  },
+  {
+   "key": "bank_next",
+   "name": "Next Bank",
+   "momentary": true
+  },
+  {
+   "key": "browse_bank",
+   "name": "BANK",
+   "min": 0,
+   "max": 14,
+   "display": "int",
+   "qlink_ticks": 5,
+   "dynamic_display": true
+  },
+  {
+   "key": "browse_patch",
+   "name": "PATCH",
+   "min": 0,
+   "max": 29,
+   "display": "int",
+   "qlink_ticks": 5,
    "dynamic_display": true
   }
  ]
