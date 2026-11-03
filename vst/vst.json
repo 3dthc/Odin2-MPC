@@ -81,5 +81,6 @@
       "-lm"
     ]
   },
-  "skin_post": "skin_post.py"
+  "skin_post": "skin_post.py",
+  "skin_os": 2
 }
