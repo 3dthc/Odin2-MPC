@@ -82,5 +82,9 @@
     ]
   },
   "skin_post": "skin_post.py",
-  "skin_os": 2
+  "skin_os": 2,
+  "targets": [
+    "armv7",
+    "aarch64"
+  ]
 }
