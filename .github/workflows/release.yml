@@ -17,12 +17,12 @@ on:
 
 jobs:
   vst:
-    uses: sd88me/mpc-vst-plugins/.github/workflows/vst-release.yml@8aa8d3552a55a93eb4034bb9bbb02cbe91d69b61
+    uses: 3dthc/mpc-vst-plugins/.github/workflows/vst-release.yml@8dd4c2f0c728459b4e96859460e404460283919a
     permissions: { contents: write }
     with:
       tag: odin2-v${{ inputs.version }}
       version: ${{ inputs.version }}
-      tools_ref: 8aa8d3552a55a93eb4034bb9bbb02cbe91d69b61
+      tools_ref: 8dd4c2f0c728459b4e96859460e404460283919a
       vst_dir: vst
       build: '"$MPC_VST/tools/build_port.sh" vst/vst.json'
       host_test: '"$MPC_VST/tools/test_port.sh" vst/vst.json'
