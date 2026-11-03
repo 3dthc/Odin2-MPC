@@ -1,3 +1,4 @@
 [
-  {"version": "1.4.4", "device": "MPC Live II", "firmware": "3.9.1", "date": "2026-10-26"}
+  {"version": "1.4.4", "device": "MPC Live II", "firmware": "3.9.1", "date": "2026-10-26"},
+  {"version": "1.4.6", "device": "MPC Live II", "firmware": "3.10", "date": "2026-11-03", "notes": "Gen1 armv7 build. The one-step bank and patch arrows were checked on the device. The aarch64 build of the same release has not been run on a Gen2, and no MPC OS 2.x device has run this skin."}
 ]
