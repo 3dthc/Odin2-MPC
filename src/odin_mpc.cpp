@@ -187,6 +187,20 @@ struct Instance {
     float tuneHz = 440.f;
     int theme = 0;        // the page's look (1.4), the plugin's own: kept across patches, saved with the project
     int browseBank = 0;   // BROWSE: the bank whose patches the list shows
+    // One touch of a button reaches us as two sets, and a redraw makes the host report the button's value back on
+    // top of those, so a step taken on every set above 0.5 was taken two or three times. Each button remembers when
+    // it last acted; anything within TAP_MS of that is the same touch.
+    static constexpr double TAP_MS = 250;
+    std::unordered_map<std::string, double> tapAt;
+    bool tapOnce(const std::string &key) {
+        struct timespec t;
+        clock_gettime(CLOCK_MONOTONIC, &t);
+        double now = t.tv_sec * 1000.0 + t.tv_nsec / 1000000.0;
+        auto it = tapAt.find(key);
+        if (it != tapAt.end() && now - it->second < TAP_MS) return false;
+        tapAt[key] = now;
+        return true;
+    }
     void setTune(float hz) {
         hz = hz < TUNE_LO ? TUNE_LO : hz > TUNE_HI ? TUNE_HI : hz;
         tuneHz = std::round(hz * 10.f) / 10.f;
@@ -504,10 +518,12 @@ struct Instance {
             if (k == "preset") loadPreset((int)std::lround(v));
             else if (k == "panic" && v > 0.5f) odin.panic();
             else if ((k == "bank_prev" || k == "bank_next") && v > 0.5f) {   // the bank to choose patches from
-                int n = banks().n;
+                int n = tapOnce(k) ? banks().n : 0;
+                if (!n) break;
                 browseBank = (browseBank + (k == "bank_next" ? 1 : n - 1)) % n;
                 ++displayRev;
             } else if ((k == "preset_prev" || k == "preset_next") && v > 0.5f) {   // a patch of that bank
+                if (!tapOnce(k)) break;
                 const std::vector<int> &ps = banks().patches[browseBank];
                 int at = -1, m = (int)ps.size();
                 for (int i = 0; i < m; i++)
@@ -533,10 +549,10 @@ struct Instance {
                 int t = (int)std::lround(v);
                 if (t >= 0 && t < NTHEMES && t != theme) theme = t, ++displayRev;
             } else if (k.compare(0, 10, "bank_slot_") == 0) {   // a tap on a bank: browse it
-                int b = atoi(k.c_str() + 10) - 1;
+                int b = tapOnce(k) ? atoi(k.c_str() + 10) - 1 : -1;
                 if (b >= 0 && b < banks().n && b != browseBank) browseBank = b, ++displayRev;
             } else if (k.compare(0, 11, "patch_slot_") == 0) {   // a tap on a patch: load it (the loaded one: nothing)
-                int i = atoi(k.c_str() + 11) - 1;
+                int i = tapOnce(k) ? atoi(k.c_str() + 11) - 1 : -1;
                 const std::vector<int> &ps = banks().patches[browseBank];
                 if (i >= 0 && i < (int)ps.size() && ps[i] != preset) loadPreset(ps[i]);
             }
