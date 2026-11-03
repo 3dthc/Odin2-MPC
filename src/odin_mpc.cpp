@@ -517,10 +517,15 @@ struct Instance {
             std::string k = c.key;
             if (k == "preset") loadPreset((int)std::lround(v));
             else if (k == "panic" && v > 0.5f) odin.panic();
-            else if ((k == "bank_prev" || k == "bank_next") && v > 0.5f) {   // the bank to choose patches from
+            else if ((k == "bank_prev" || k == "bank_next") && v > 0.5f) {
+                // The header arrows pick the bank that is PLAYING, so they load its first patch: the name beside
+                // them and the sound have to agree. (The BROWSE page's bank tiles still only look: browsing a bank
+                // without disturbing what is playing is the point of that page.)
                 int n = tapOnce(k) ? banks().n : 0;
                 if (!n) break;
                 browseBank = (browseBank + (k == "bank_next" ? 1 : n - 1)) % n;
+                const std::vector<int> &ps = banks().patches[browseBank];
+                if (!ps.empty()) loadPreset(ps[0]);
                 ++displayRev;
             } else if ((k == "preset_prev" || k == "preset_next") && v > 0.5f) {   // a patch of that bank
                 if (!tapOnce(k)) break;
