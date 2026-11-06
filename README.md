@@ -52,8 +52,8 @@ knob rings, values, buttons, fields and the CPU meter. **Odin Blue** (Odin 2's o
 **2000** (an homage to the MPC2000 drawn from scratch, no Akai logos or artwork: light grey, charcoal title bands, red
 keys and rings, a green-lit display), **Arctic** (white and brushed silver, orange) and **Sunburst** (an orange
 chassis, charcoal modules). Names and values sit on smoked-glass plates the look's panels show through. The skin's
-images take about 150 MB of the MPC's memory with all four looks (1.4.4: 112 MB). Projects saved with 1.4.4's 2500 or
-3000 look open in Odin Blue.
+images take about 150 MB of the MPC's memory with all four looks (1.4.6: 112 MB). Projects saved with 1.4.6 or earlier
+on the 2500 or 3000 look open in Odin Blue.
 
 Left out because they are awkward on a touchscreen or rarely touched live (the patch still has them, factory
 patches set them, projects keep them): the mod matrix, the arpeggiator's step editor, drawing waveforms, vector

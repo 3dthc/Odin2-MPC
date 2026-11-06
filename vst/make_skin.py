@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Odin 2's MPC pages (1.4.5): writes vst/layout.conf and every image it uses (vst/art/gen/).
+"""Odin 2's MPC pages (1.4.7): writes vst/layout.conf and every image it uses (vst/art/gen/).
 
 Six pages (MAIN, OSC, FILTER, ENV, FX, BROWSE) in four looks the player switches live on the BROWSE page's LOOK bar:
   Odin Blue  Odin 2's own look, refined: its textured blue module panels on a deep chassis, ice-blue rings and values

@@ -10,10 +10,14 @@ extern "C" {
 #include "engine.h"
 }
 #include <chrono>
+#include <thread>
 #include <cmath>
 #include <dirent.h>
 #include <fstream>
 #include <sstream>
+
+/* wait out the plugin's one-touch window (Instance::TAP_MS) before the next press of the same button */
+static void tap_gap() { std::this_thread::sleep_for(std::chrono::milliseconds(300)); }
 
 static int fails = 0;
 #define CHECK(c, ...) do { printf("%s ", (c) ? "ok  " : "FAIL"); printf(__VA_ARGS__); printf("\n"); if (!(c)) fails++; } while (0)
@@ -276,8 +280,11 @@ int main(int argc, char **argv) {
         std::string p1 = get(e, x, "preset_name");
         CHECK(p1 == get(e, x, "patch_slot_1") && get(e, x, "patch_slot_1_on") == "1",
               "PATCH arrow then loads that bank's first patch (%s)", p1.c_str());
+        tap_gap();   // 1.4.6: presses within 250 ms of each other are one touch
         e->set_param(x, "preset_next", "1");
         CHECK(get(e, x, "preset_name") == get(e, x, "patch_slot_2"), "and steps within the bank");
+        e->set_param(x, "preset_next", "1");   // at once: the same touch reported again, no second step
+        CHECK(get(e, x, "preset_name") == get(e, x, "patch_slot_2"), "a touch reported twice steps once");
         e->set_param(x, "bank_slot_3", "1");
         e->set_param(x, "patch_slot_2", "1");
         CHECK(get(e, x, "bank_name") == get(e, x, "bank_slot_3") && get(e, x, "preset_name") == get(e, x, "patch_slot_2"),
@@ -300,7 +307,7 @@ int main(int argc, char **argv) {
         void *y = e->create(nullptr);
         e->set_param(y, "state", st.c_str());
         CHECK(get(e, y, "theme") == "3", "the look is saved with the project");
-        // 1.4.5: a 1.4-1.4.4 project saved "theme" in the old list (Odin Blue, 2000, 2500, 3000)
+        // 1.4.7: a 1.4-1.4.6 project saved "theme" in the old list (Odin Blue, 2000, 2500, 3000)
         std::string old = st.substr(0, st.find("look=")) + "theme=3\n";
         e->set_param(y, "state", old.c_str());
         CHECK(get(e, y, "theme") == "0", "an older project's 3000 look opens in Odin Blue");
