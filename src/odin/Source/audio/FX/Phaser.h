@@ -20,6 +20,7 @@
 #include <cmath>
 
 #define PHASER_MAX_LFO_AMPLITUDE 4000
+#define PHASER_COEF_RATE 4 // odin2-mpc: see Phaser::doPhaserLeft and m_coef_rate
 
 class Phaser {
 public:
@@ -58,7 +59,13 @@ public:
     m_AP12_right.setSampleRate(p_samplerate);
   }
 
+  // odin2-mpc: samples between coefficient updates: PHASER_COEF_RATE at control rate, 1 (every sample) otherwise
+  void setCoefRate(int p_rate) {
+    m_coef_rate = p_rate < 1 ? 1 : p_rate;
+  }
+
   inline void reset() {
+    m_coef_count_left = m_coef_count_right = 0;
     m_AP1_left.reset();
     m_AP2_left.reset();
     m_AP3_left.reset();
@@ -236,4 +243,6 @@ protected:
   float m_store_output_left = 0;
   float m_store_output_right = 0;
 
+  int m_coef_count_left = 0, m_coef_count_right = 0; // odin2-mpc: samples until the next coefficient update
+  int m_coef_rate = 1; // odin2-mpc: samples between coefficient updates (setCoefRate)
 };

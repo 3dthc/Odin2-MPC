@@ -6,9 +6,9 @@
 |---|---|---|
 | ![OSC](docs/screenshots/osc.png) | ![FILTER](docs/screenshots/filter.png) | ![BROWSE](docs/screenshots/browse.png) |
 
-**Four themes, switched live:** Odin Blue, 2000, 2500, 3000
+**Four looks, switched live:** Odin Blue, 2000, Arctic, Sunburst
 
-![The four themes](docs/screenshots/themes.png)
+![The four looks](docs/screenshots/themes.png)
 
 [Odin 2](https://github.com/TheWaveWarden/odin2), TheWaveWarden's semi-modular synthesizer, as a native
 VST2 instrument for Akai MPC OS standalone devices (built for a Gen 1 MPC Live II), with its own touchscreen pages in
@@ -23,7 +23,7 @@ for the MPC's ARM processor without JUCE. Odin's 261 factory patches are built i
 Six pages, laid out for playing standing up on a 4-knob MPC (Live II): each sound page is four columns of four big
 knobs, and each column is one Q-Link column, so the four Q-Links turn exactly the four knobs outlined on screen
 (press the Q-Link button to move to the next column). Every knob shows a short name (CUTOFF 1, ATTACK, DELAY MIX…)
-and its value on a dark plate, the same size on every page. Choices you set and leave (types, routing, play mode)
+and its value on a glass plate, the same size on every page. Choices you set and leave (types, routing, play mode)
 are in the panel on the right, where MPC's Q-Link panel slides in while you turn a Q-Link.
 
 - **Top bar (every page):** ECO and its light, **BANK ◀ name ▶** (the arrows change the bank only, the sound stays),
@@ -36,21 +36,24 @@ are in the panel on the right, where MPC's Q-Link panel slides in while you turn
   dark window at the bottom), fine tune for all three plus **TUNE A4**, the master tune (415–465 Hz, 440 in the
   middle; it belongs to the plugin, so it stays when you change patches, and is saved with the project; new notes
   take it). **SHAPE** turns whatever matters for the oscillator's type and is named after it: PW (analog), POSITION
-  (wavetable, multi), VECTOR X, FM/PM AMOUNT, LOWPASS (noise). Right: unison.
+  (wavetable, multi), VECTOR X, FM/PM AMOUNT, LOWPASS (noise). The bottom window appears only for types that have a
+  choice there. Right: voice (unison voices, detune, width, glide, bend range).
 - **FILTER:** filters 1 and 2 (per voice) and 3 (on the stereo sum): cutoff, resonance, envelope, key follow, plus
-  velocity and the type's own control (SEM shape, formant vowel, ring-mod amount) in the bottom window; Drive (filter
+  velocity and the type's own control (SEM shape, formant vowel, ring-mod amount) in the bottom window (not on Bypass); Drive (filter
   saturation, distortion amount and mix). Right: routing and the distortion type.
 - **ENV:** amp, filter and mod envelopes (A/D/S/R), the four LFO rates. Right: the LFO waves.
 - **FX:** delay, reverb, chorus, phaser, each with its on button. Right: flanger.
 - **BROWSE:** the banks on the left, the chosen bank's patches on the right, as big tiles: tap a bank to see its
-  patches, tap a patch to load it. Bottom left: **THEME**. Q-Link 1 scrolls the banks only and Q-Link 2 the patches of that bank only, one
+  patches, tap a patch to load it. Along the bottom: **LOOK**, one button per look with a chip of its colours. Q-Link 1 scrolls the banks only and Q-Link 2 the patches of that bank only, one
   step per few clicks so they don't race.
 
-**Themes** (switch any time; saved with the project, kept when you change patches): **Odin Blue** (Odin 2's own
-look, the default), and three homages to classic MPCs drawn from scratch (no Akai logos or artwork): **2000**
-(warm light grey, dark label bands, red accents), **2500** (charcoal, silver edges, blue displays) and **3000** (cream
-and taupe, red accents, a violin and music notes). The skin's images take about 112 MB of the MPC's memory with all
-four looks (1.3: 66 MB).
+**Looks** (switch any time; saved with the project, kept when you change patches). Each has its own colours throughout:
+knob rings, values, buttons, fields and the CPU meter. **Odin Blue** (Odin 2's own look, the default: navy, ice blue),
+**2000** (an homage to the MPC2000 drawn from scratch, no Akai logos or artwork: light grey, charcoal title bands, red
+keys and rings, a green-lit display), **Arctic** (white and brushed silver, orange) and **Sunburst** (an orange
+chassis, charcoal modules). Names and values sit on smoked-glass plates the look's panels show through. The skin's
+images take about 150 MB of the MPC's memory with all four looks (1.4.4: 112 MB). Projects saved with 1.4.4's 2500 or
+3000 look open in Odin Blue.
 
 Left out because they are awkward on a touchscreen or rarely touched live (the patch still has them, factory
 patches set them, projects keep them): the mod matrix, the arpeggiator's step editor, drawing waveforms, vector

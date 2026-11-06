@@ -64,6 +64,7 @@ public:
 	// stay per sample. Patches that modulate from an oscillator or filter output always run per sample.
 	int m_ctrl_rate = 1;
 	int m_ctrl_count = 0;
+	bool m_voice_live[VOICES] = {}; // odin2-mpc: which voices sound, for the mod matrix (ModMatrixRow::m_live)
 	// voice protection: start a voice's amp envelope on a 15 ms release (it ends, and frees the voice, quickly)
 	void fastReleaseVoice(int p_voice) {
 		m_voice[p_voice].startRelease();

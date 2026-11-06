@@ -180,11 +180,17 @@ struct ModSources {
 
 class ModMatrixRow {
 public:
+  // odin2-mpc: which voices are sounding (VOICES flags, owned by the processor; null: all). A silent voice's poly
+  // destinations are neither cleared nor modulated: nothing reads them until the voice starts, and a voice starting
+  // forces a control tick, which works them out before its first sample
+  const bool *m_live = nullptr;
+
   // odin2-mpc: set the destinations this row adds to back to 0 (see ModMatrix::zeroAllDestinations)
   void zeroOwnDestinations() {
     if (m_active_1) {
       if (m_destination_1_poly) {
         for (int voice = 0; voice < VOICES; ++voice) {
+          if (m_live && !m_live[voice]) continue;
           *(m_destination_1_value[voice]) = 0.f;
         }
       } else {
@@ -194,6 +200,7 @@ public:
     if (m_active_2) {
       if (m_destination_2_poly) {
         for (int voice = 0; voice < VOICES; ++voice) {
+          if (m_live && !m_live[voice]) continue;
           *(m_destination_2_value[voice]) = 0.f;
         }
       } else {
@@ -291,6 +298,7 @@ public:
   void setSourcesAndDestinations(ModSources *p_source, ModDestinations *p_destination);
 
   void applyModulation();
+  void setLiveVoices(const bool *p_live);   // odin2-mpc: see ModMatrixRow::m_live
 
   void setModSource(int p_row, int p_source);
   void setModDestination1(int p_row, int p_destination);

@@ -42,7 +42,7 @@ LFO_WAVES = ["Sine", "Saw", "Triangle", "Square 50", "Square 25", "Square 12", "
 DIST_ALGOS = [("Clamp", 1), ("Fold", 2), ("Zero", 3)]
 UNISON = [("1", 1), ("2", 2), ("3", 3), ("4", 4), ("6", 6), ("12", 12)]
 PLAY_MODES = ["Legato", "Poly", "Retrig"]
-THEMES = ["Odin Blue", "2000", "2500", "3000"]   # vst/make_skin.py draws one look per entry, in this order
+THEMES = ["Odin Blue", "2000", "Arctic", "Sunburst"]   # vst/make_skin.py draws one look per entry, in this order
 BANK_SLOTS, PATCH_SLOTS = 16, 30
 BROWSE_TICKS = 5   # Q-Link moves per bank/patch step on BROWSE
 

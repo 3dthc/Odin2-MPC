@@ -229,7 +229,7 @@ struct Instance {
         std::string s = "odin2mpc=1\npreset=" + std::to_string(preset) + "\n";
         if (ceiling != VOICE_CEILING) s += "voices=" + std::to_string(ceiling) + "\n";
         if (eco != ECO_AUTO) s += "eco=" + std::to_string(eco) + "\n";
-        if (theme) s += "theme=" + std::to_string(theme) + "\n";
+        if (theme) s += "look=" + std::to_string(theme) + "\n";   // 1.4.5: "look" (1.4-1.4.4 saved "theme", another list)
         if (tuneHz != 440.f) {
             char t[32];
             snprintf(t, sizeof t, "tune=%.1f\n", tuneHz);
@@ -259,7 +259,11 @@ struct Instance {
             else if (kv.first == "voices") poly = atoi(kv.second.c_str());
             else if (kv.first == "eco") e = atoi(kv.second.c_str());
             else if (kv.first == "tune") tune = (float)atof(kv.second.c_str());
-            else if (kv.first == "theme") th = atoi(kv.second.c_str());
+            else if (kv.first == "look") th = atoi(kv.second.c_str());
+            else if (kv.first == "theme") {   // 1.4-1.4.4: Odin Blue, 2000, 2500, 3000; the last two are gone
+                int old = atoi(kv.second.c_str());
+                th = old == 1 ? 1 : 0;
+            }
             else rest.push_back(kv);
         }
         loadPreset(n);

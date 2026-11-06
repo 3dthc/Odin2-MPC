@@ -107,7 +107,12 @@ float Phaser::doPhaserLeft(float p_input) {
 	base_freq_modded       = base_freq_modded > 8000 ? 8000 : base_freq_modded;
 	base_freq_modded       = base_freq_modded < 400 ? 400 : base_freq_modded;
 
-	setFrequencyLeft(base_freq_modded + (LFO)*amount_modded * PHASER_MAX_LFO_AMPLITUDE);
+	// odin2-mpc: at control rate (ECO), the sweep's coefficients every PHASER_COEF_RATE samples (11 kHz): the same
+	// sweep, a quarter of the work; every sample otherwise (m_coef_rate 1)
+	if (m_coef_count_left-- <= 0) {
+		m_coef_count_left = m_coef_rate - 1;
+		setFrequencyLeft(base_freq_modded + (LFO)*amount_modded * PHASER_MAX_LFO_AMPLITUDE);
+	}
 
 	double phase_shifted = m_AP1_left.doFilter(m_AP2_left.doFilter(m_AP3_left.doFilter(input_with_feedback)));
 	phase_shifted        = m_AP4_left.doFilter(m_AP5_left.doFilter(m_AP6_left.doFilter(phase_shifted)));
@@ -142,7 +147,12 @@ float Phaser::doPhaserRight(float p_input) {
 	base_freq_modded       = base_freq_modded > 8000 ? 8000 : base_freq_modded;
 	base_freq_modded       = base_freq_modded < 400 ? 400 : base_freq_modded;
 
-	setFrequencyRight(base_freq_modded + (LFO)*amount_modded * PHASER_MAX_LFO_AMPLITUDE);
+	// odin2-mpc: at control rate (ECO), the sweep's coefficients every PHASER_COEF_RATE samples (11 kHz): the same
+	// sweep, a quarter of the work; every sample otherwise (m_coef_rate 1)
+	if (m_coef_count_right-- <= 0) {
+		m_coef_count_right = m_coef_rate - 1;
+		setFrequencyRight(base_freq_modded + (LFO)*amount_modded * PHASER_MAX_LFO_AMPLITUDE);
+	}
 
 	double phase_shifted = m_AP1_right.doFilter(m_AP2_right.doFilter(m_AP3_right.doFilter(input_with_feedback)));
 	phase_shifted        = m_AP4_right.doFilter(m_AP5_right.doFilter(m_AP6_right.doFilter(phase_shifted)));

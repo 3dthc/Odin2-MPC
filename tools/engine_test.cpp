@@ -295,11 +295,18 @@ int main(int argc, char **argv) {
               "then steps through it (%s)", get(e, x, "preset_name").c_str());
         e->set_param(x, "browse_patch", "29");
         CHECK(get(e, x, "bank_name") == bank, "and never leaves the bank (%s, %s)", bank.c_str(), get(e, x, "preset_name").c_str());
-        e->set_param(x, "theme", "3");
+        e->set_param(x, "theme", "3");   // Sunburst
         std::string st = get(e, x, "state");
         void *y = e->create(nullptr);
         e->set_param(y, "state", st.c_str());
-        CHECK(get(e, y, "theme") == "3", "the theme is saved with the project");
+        CHECK(get(e, y, "theme") == "3", "the look is saved with the project");
+        // 1.4.5: a 1.4-1.4.4 project saved "theme" in the old list (Odin Blue, 2000, 2500, 3000)
+        std::string old = st.substr(0, st.find("look=")) + "theme=3\n";
+        e->set_param(y, "state", old.c_str());
+        CHECK(get(e, y, "theme") == "0", "an older project's 3000 look opens in Odin Blue");
+        old = st.substr(0, st.find("look=")) + "theme=1\n";
+        e->set_param(y, "state", old.c_str());
+        CHECK(get(e, y, "theme") == "1", "and its 2000 look stays 2000");
         e->destroy(x);
         e->destroy(y);
     }

@@ -106,6 +106,23 @@
 | 6 | Project | save, reload | same patch, edits, ECO and tune |
 | 7 | Bench | `../mpc-vst-plugins/tools/bench.sh vst/build/odin2.so <ip> -j` | PASS or WARN; record the result here |
 
+## 1.4.5: looks, layout, a lighter engine
+Engine: the mod matrix skips voices that aren't sounding (a starting voice forces a control tick, so its modulation is
+worked out before its first sample), and at control rate (ECO Auto, Eco, Lite) the phaser works out its 24 all-pass
+coefficients every 4 samples (11 kHz) instead of every sample. Over the factory bank on x86 (`tools/patch_cost.sh`'s
+measure, 2 runs): effects with no voice -14 %, 4 voices at ECO Auto -5 %, ECO Off per voice unchanged. At ECO Off the
+output is identical to 1.4.4's, sample for sample, on every factory patch (Odin's clock-seeded random pinned; the two
+random-arpeggiator patches differ run to run in either version). `tools/engine_test.sh` passes, including the
+patch-by-patch comparison with Odin's own reader.
+Skin: four looks (Odin Blue, 2000, Arctic, Sunburst; 2500 and 3000 removed), each with its own control colours;
+glass plates and fields; the BROWSE LOOK bar replaces the THEME popup; one knob size on the grids, knob bodies
+centred in their rings; mode insets only for types with controls in them. State saves `look=`; a 1.4-1.4.4 `theme=`
+maps 2000 to 2000 and the rest to Odin Blue (tested). Check on the device:
+- LOOK: every button switches every page at once; each look's knobs, values, buttons and CPU meter follow it;
+- OSC: the bottom window shows for Analog, Wavetable, Multi, Vector, Chiptune, FM, PM, Noise, not for Off or the
+  drawn types; FILTER: velocity and its window hidden on Bypass;
+- a project saved with 1.4.4 on 3000 opens in Odin Blue; one on 2000 stays 2000.
+
 ## 1.4.4: rebuilt on the 2026-10-21 wrapper
 The wrapper no longer asks MPC to rebuild its parameter screen on every parameter write (Q-Links on the track's automation
 screen snapped back). Text that follows another setting still asks (`"refresh_display"`, set by `vst/make_params.py`): the

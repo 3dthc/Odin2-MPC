@@ -34,6 +34,7 @@ void OdinAudioProcessor::processStereo(float *p_left, float *p_right, int p_fram
 	if (!ctrl_rate) {
 		m_ctrl_count = 0;
 	}
+	m_phaser.setCoefRate(m_ctrl_rate > 1 ? PHASER_COEF_RATE : 1); // odin2-mpc: ECO Off keeps Odin's phaser exactly
 
 	// loop over samples
 	for (int sample = 0; sample < p_frames; ++sample) {
@@ -121,6 +122,9 @@ void OdinAudioProcessor::processStereo(float *p_left, float *p_right, int p_fram
 		//============================================================
 
 		if (tick) {
+			for (int voice = 0; voice < VOICES; ++voice) {
+				m_voice_live[voice] = (bool)m_voice[voice];
+			}
 			m_mod_matrix.zeroAllDestinations();
 			m_mod_matrix.applyModulation();
 		}

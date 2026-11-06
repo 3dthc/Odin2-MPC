@@ -12,6 +12,7 @@
   --sheen: 0.05;
 }
 .seg-tx, .button-tx, .box-label, .text, .frame-title { font-family: "Aldrich", var(--font); font-weight: 400; }
-.box { fill: #05141d; stroke: #2e6886; stroke-width: 1.5; }
+.box { fill: #11171b; stroke: #4a5258; stroke-width: 1.5; }
+.seg-tx { fill: #eef1f3; }
 .seg-bg { stroke: #04080b; stroke-width: 1.5; }
 .tile { stroke: #04080b; }

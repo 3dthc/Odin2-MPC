@@ -60,6 +60,7 @@ void OdinAudioProcessor::initializeModules() {
 	m_global_env.setEnvelopeOff(); // so it doesn't start by itself
 
 	m_mod_matrix.setSourcesAndDestinations(&m_mod_sources, &m_mod_destinations);
+	m_mod_matrix.setLiveVoices(m_voice_live);
 
 	m_phaser.setRadiusBase(1.25f);
 

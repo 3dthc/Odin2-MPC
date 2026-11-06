@@ -26,6 +26,7 @@ void ModMatrixRow::applyModulation() {
 		// poly destination -> #VOICES modulations
 		if (m_destination_1_poly) {
 			for (int voice = 0; voice < VOICES; ++voice) {
+				if (m_live && !m_live[voice]) continue; // odin2-mpc: silent voice, nothing to modulate
 				if (m_scale) {
 					if (m_scale_amount >= 0) {
 						*(m_destination_1_value[voice]) += (*m_source_value[voice]) * m_mod_amount_1 *
@@ -72,6 +73,7 @@ void ModMatrixRow::applyModulation() {
 		// poly destination -> #VOICES modulations
 		if (m_destination_2_poly) {
 			for (int voice = 0; voice < VOICES; ++voice) {
+				if (m_live && !m_live[voice]) continue; // odin2-mpc: silent voice, nothing to modulate
 				if (m_scale) {
 					if (m_scale_amount >= 0) {
 						*(m_destination_2_value[voice]) += (*m_source_value[voice]) * m_mod_amount_2 *
@@ -1064,6 +1066,12 @@ bool ModMatrixRow::usesADSR1() // global env
 //=========================================================
 //=================== MODMATRIX ===========================
 //=========================================================
+
+void ModMatrix::setLiveVoices(const bool *p_live) {
+	for (int row = 0; row < MODMATRIX_ROWS; ++row) {
+		m_row[row].m_live = p_live;
+	}
+}
 
 void ModMatrix::applyModulation() {
 	for (int row = 0; row < MODMATRIX_ROWS; ++row) {
