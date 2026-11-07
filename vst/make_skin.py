@@ -727,7 +727,7 @@ def draw_labels(look, labels):
     d = ImageDraw.Draw(CANVAS)
     for x, y, t, role, anchor in labels:
         col = look["caption_hi"] if role == "hi" else look["caption"]
-        spaced(d, (x * k, y * k), t, font(look["label_font"], 20 * k), rgba(col), 1.2 * k, anchor)
+        spaced(d, (x * k, y * k), t, font(look["label_font"], 24 * k), rgba(col), 1.2 * k, anchor)
 
 
 CANVAS = None
