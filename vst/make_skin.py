@@ -474,9 +474,7 @@ def typed_column(sx, title, type_key, with_inset):
     panel(sx, SW, title)
     type_picker(sx, type_key)
     opts = PARAMS[type_key]["options"]
-    files = ",".join(inset_image() if o.lower() in with_inset else "" for o in opts)
-    line('picture x=%d y=%d w=%d h=%d key=%s files="%s"' % (sx + 8, Y(INSET[0]), SW - 16, INSET[1] - INSET[0], type_key,
-                                                          files))
+    # no dark inset under the type picker (removed 2026-11-06 at the user's request): the controls sit on the panel
 
 
 # ------------------------------------------------------------------------------------------------- control images
@@ -729,7 +727,7 @@ def draw_labels(look, labels):
     d = ImageDraw.Draw(CANVAS)
     for x, y, t, role, anchor in labels:
         col = look["caption_hi"] if role == "hi" else look["caption"]
-        spaced(d, (x * k, y * k), t, font(look["label_font"], 16 * k), rgba(col), 1.2 * k, anchor)
+        spaced(d, (x * k, y * k), t, font(look["label_font"], 20 * k), rgba(col), 1.2 * k, anchor)
 
 
 CANVAS = None
@@ -953,24 +951,19 @@ def tab_browse():
     ph = PH - LOOK_BAR - 6
     bx, bw = 8, 372
     panel(bx, bw, "BANKS", h=ph)
-    cols, rows, th, gap = 2, 8, 44, 5
-    lw = bw - 28
-    tw = (lw - gap) // cols
-    # one tile set in every look (the kit names a list's tile pictures after its parameter): graphite glass, light names
-    line('list x=%d y=%d w=%d h=%d key=bank_slot cols=%d rows=%d th=%d gap=%d order=cols img=%s img_on=%s '
-         'tsize=25 tcolor=%s' % (bx + 14, Y(TOP + 54), lw, rows * th + (rows - 1) * gap, cols, rows, th, gap,
-                                save(card(False, tw, th, NEUTRAL), "card_bank.png"),
-                                save(card(True, tw, th, NEUTRAL), "card_bank_on.png"), hexc(NEUTRAL["ink"])))
+    # the bank and the patch: each a simple < name > selector (the same arrows as the top bar), not a list
+    def selector(x, w, prev_key, next_key, name_key, cy):
+        left = (lambda u: arrow_button(-1, False, ui_=u), lambda u: arrow_button(-1, True, ui_=u))
+        right = (lambda u: arrow_button(1, False, ui_=u), lambda u: arrow_button(1, True, ui_=u))
+        cx = x + w // 2
+        button_img(x + 36, cy, prev_key, "arrow_l", left[0], left[1], 40, 46)
+        readout(cx, cy, w - 120, 46, name_key, 28)
+        button_img(x + w - 36, cy, next_key, "arrow_r", right[0], right[1], 40, 46)
+
+    selector(bx, bw, "bank_prev", "bank_next", "bank_name", TOP + 80)
     px, pw = 388, W - 8 - 388
     panel(px, pw, "PATCHES", h=ph)
-    cols, rows, th, gap = 3, 10, 36, 3
-    lw = pw - 28
-    tw = (lw - 2 * gap) // cols
-    # one tile set in every look (the kit names a list's tile pictures after its parameter): graphite glass, light names
-    line('list x=%d y=%d w=%d h=%d key=patch_slot cols=%d rows=%d th=%d gap=%d order=cols img=%s img_on=%s '
-         'tsize=24 tcolor=%s' % (px + 14, Y(TOP + 54), lw, rows * th + (rows - 1) * gap, cols, rows, th, gap,
-                                save(card(False, tw, th, NEUTRAL), "card_patch.png"),
-                                save(card(True, tw, th, NEUTRAL), "card_patch_on.png"), hexc(NEUTRAL["ink"])))
+    selector(px, pw, "preset_prev", "preset_next", "preset_name", TOP + 80)
     # the look picker: a bar with one button per look; a window in each button shows that look's chip
     y0 = BOT - LOOK_BAR
     panel(8, W - 16, "", y=y0, h=LOOK_BAR)
