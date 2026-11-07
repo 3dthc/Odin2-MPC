@@ -1604,18 +1604,6 @@
    ]
   },
   {
-   "key": "theme_prev",
-   "name": "Prev Theme",
-   "momentary": true,
-   "refresh_display": true
-  },
-  {
-   "key": "theme_next",
-   "name": "Next Theme",
-   "momentary": true,
-   "refresh_display": true
-  },
-  {
    "key": "bank_slot_1",
    "name": "Bank 1",
    "min": 0,
@@ -1973,6 +1961,18 @@
    "display": "int",
    "qlink_ticks": 5,
    "dynamic_display": true,
+   "refresh_display": true
+  },
+  {
+   "key": "theme_prev",
+   "name": "Prev Theme",
+   "momentary": true,
+   "refresh_display": true
+  },
+  {
+   "key": "theme_next",
+   "name": "Next Theme",
+   "momentary": true,
    "refresh_display": true
   }
  ]

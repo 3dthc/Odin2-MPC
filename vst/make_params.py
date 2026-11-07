@@ -224,8 +224,6 @@ for n in (1, 2, 3):
 special("voices", "Voices")   # read-only: how many voices the budget lets sound now (1.3)
 special("tune", "Master Tune")   # A4 = 415..465 Hz, 440 in the middle; the plugin's, kept across patches (1.3)
 special("theme", "Theme", options=THEMES)   # the page's look, the plugin's own (1.4)
-special("theme_prev", "Prev Theme", momentary=True)   # BROWSE: the look box's left arrow
-special("theme_next", "Next Theme", momentary=True)   # BROWSE: the look box's right arrow
 for i in range(1, BANK_SLOTS + 1):   # BROWSE: the banks (patch categories), one list tile each (1.4)
     special("bank_slot_%d" % i, "Bank %d" % i)
 for i in range(1, PATCH_SLOTS + 1):  # BROWSE: the patches of the bank being browsed (1.4)
@@ -235,6 +233,9 @@ special("bank_prev", "Prev Bank", momentary=True)
 special("bank_next", "Next Bank", momentary=True)
 special("browse_bank", "BANK")     # BROWSE Q-Link 1: the bank only (1.4.1)
 special("browse_patch", "PATCH")   # BROWSE Q-Link 2: a patch of that bank only (1.4.1)
+# appended last: parameter indices are fixed once a build has written params.lock
+special("theme_prev", "Prev Theme", momentary=True)   # BROWSE: the look box's left arrow
+special("theme_next", "Next Theme", momentary=True)   # BROWSE: the look box's right arrow
 
 
 def build():
