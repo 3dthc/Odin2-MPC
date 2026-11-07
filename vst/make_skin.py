@@ -964,27 +964,16 @@ def tab_browse():
     px, pw = 388, W - 8 - 388
     panel(px, pw, "PATCHES", h=ph)
     selector(px, pw, "preset_prev", "preset_next", "preset_name", TOP + 80)
-    # the look picker: a bar with one button per look; a window in each button shows that look's chip
+    # the look box: the look's name between a left and a right arrow (the arrows step the look)
     y0 = BOT - LOOK_BAR
-    panel(8, W - 16, "", y=y0, h=LOOK_BAR)
-    label(26, y0 + LOOK_BAR // 2, "LOOK", anchor="lm")
-    n, sh, gap = len(LOOKS), 46, 2
-    sw = min(280, (W - 16 - 110 - 14 - (n - 1) * gap) // n)   # the buttons fill the bar
-    cx, cy = 8 + 110 + (W - 16 - 110 - 14) // 2, y0 + LOOK_BAR // 2
-    x0 = cx - (n * sw + (n - 1) * gap) // 2
-    win = (6, 10, 6 + 22, sh - 10)
-
-    def face(on):
-        b = text_button("", on, sw, sh, 10, ui_=NEUTRAL)
-        m = Image.new("L", b.size, 255)
-        ImageDraw.Draw(m).rounded_rectangle((win[0] - 1, win[1] - 1, win[2], win[3]), 5, fill=0)
-        b.putalpha(ImageChops.multiply(b.getchannel("A"), m))
-        return b
-    line('enum_h cx=%d cy=%d label="" key=theme sw=%d sh=%d img=%s img_on=%s' % (
-        cx, Y(cy), sw, sh, save(face(False), "look_seg.png"), save(face(True), "look_seg_on.png")))
-    for t in range(n):
-        sx = x0 + t * (sw + gap)
-        PAGE.chips.append((sx + win[0], cy - sh // 2 + win[1], sx + win[2], cy - sh // 2 + win[3], t))
+    cx, cy = W // 2, y0 + LOOK_BAR // 2
+    bw_, bh_ = 420, 52
+    PAGE.insets.append((cx - bw_ // 2, cy - bh_ // 2, cx + bw_ // 2, cy + bh_ // 2))
+    left = (lambda u: arrow_button(-1, False, ui_=u), lambda u: arrow_button(-1, True, ui_=u))
+    right = (lambda u: arrow_button(1, False, ui_=u), lambda u: arrow_button(1, True, ui_=u))
+    button_img(cx - bw_ // 2 + 30, cy, "theme_prev", "arrow_l", left[0], left[1], 40, 46)
+    readout(cx, cy, bw_ - 120, 46, "theme", 28)
+    button_img(cx + bw_ // 2 - 30, cy, "theme_next", "arrow_r", right[0], right[1], 40, 46)
     line('qlinks "BROWSE" = browse_bank,browse_patch,-,-,-,-,-,-,-,-,-,-,-,-,-,-')   # banks, patches: each on its own
     finish(PAGE)
 

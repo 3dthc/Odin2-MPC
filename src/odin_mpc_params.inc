@@ -182,6 +182,8 @@
     {"voices", K_SPECIAL, "", 0, {}, 0, 0, ""},
     {"tune", K_SPECIAL, "", 0, {}, 0, 0, ""},
     {"theme", K_SPECIAL, "", 0, {}, 0, 0, ""},
+    {"theme_prev", K_SPECIAL, "", 0, {}, 0, 0, ""},
+    {"theme_next", K_SPECIAL, "", 0, {}, 0, 0, ""},
     {"bank_slot_1", K_SPECIAL, "", 0, {}, 0, 0, ""},
     {"bank_slot_2", K_SPECIAL, "", 0, {}, 0, 0, ""},
     {"bank_slot_3", K_SPECIAL, "", 0, {}, 0, 0, ""},

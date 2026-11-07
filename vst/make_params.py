@@ -224,6 +224,8 @@ for n in (1, 2, 3):
 special("voices", "Voices")   # read-only: how many voices the budget lets sound now (1.3)
 special("tune", "Master Tune")   # A4 = 415..465 Hz, 440 in the middle; the plugin's, kept across patches (1.3)
 special("theme", "Theme", options=THEMES)   # the page's look, the plugin's own (1.4)
+special("theme_prev", "Prev Theme", momentary=True)   # BROWSE: the look box's left arrow
+special("theme_next", "Next Theme", momentary=True)   # BROWSE: the look box's right arrow
 for i in range(1, BANK_SLOTS + 1):   # BROWSE: the banks (patch categories), one list tile each (1.4)
     special("bank_slot_%d" % i, "Bank %d" % i)
 for i in range(1, PATCH_SLOTS + 1):  # BROWSE: the patches of the bank being browsed (1.4)
@@ -254,7 +256,7 @@ def build():
                 p.update({"min": 0, "max": 9999, "display": "int", "nudge_pct": 10})   # max rewritten from the bank
             elif key == "preset_name":
                 p.update({"display": "string", "poll": False})
-            elif key in ("preset_prev", "preset_next", "bank_prev", "bank_next"):
+            elif key in ("preset_prev", "preset_next", "bank_prev", "bank_next", "theme_prev", "theme_next"):
                 p.update({"momentary": True})
             elif key in ("browse_bank", "browse_patch"):
                 # whole steps, one per BROWSE_TICKS Q-Link moves (a calm scroll); the name shows as the value
@@ -306,7 +308,7 @@ def main():
     # unpolled preset and bank names follow the preset number, the arrows and the BROWSE page's picks
     for p in params:
         if p["key"] in ("osc1_type", "osc2_type", "osc3_type", "preset", "preset_prev", "preset_next", "bank_prev", "bank_next",
-                        "browse_bank", "browse_patch"):
+                        "theme_prev", "theme_next", "browse_bank", "browse_patch"):
             p["refresh_display"] = True
     out = {"name": "Odin 2", "params": params}
     with open(os.path.join(HERE, "params.json"), "w") as f:

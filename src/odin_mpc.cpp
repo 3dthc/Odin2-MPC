@@ -549,6 +549,10 @@ struct Instance {
                 i = i < 0 ? 0 : i >= m ? m - 1 : i;
                 if (at < 0) i = 0;   // the loaded patch is in another bank: the first turn picks this bank's first
                 if (m && ps[i] != preset) loadPreset(ps[i]);
+            } else if ((k == "theme_prev" || k == "theme_next") && v > 0.5f) {   // BROWSE: the look box's arrows
+                if (!tapOnce(k)) break;
+                theme = (theme + (k == "theme_next" ? 1 : NTHEMES - 1)) % NTHEMES;
+                ++displayRev;
             } else if (k == "theme") {
                 int t = (int)std::lround(v);
                 if (t >= 0 && t < NTHEMES && t != theme) theme = t, ++displayRev;
