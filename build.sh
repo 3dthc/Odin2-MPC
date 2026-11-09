@@ -2,7 +2,7 @@
 # Build Odin 2 for MPC OS (an armhf VST2 instrument) and package it as an installer zip.
 #
 #   ./build.sh                  -> vst/build/odin2.so and its skin, then dist/Odin-2-<version>-mpc-armv7.zip
-#   VERSION=1.4.1 ./build.sh    -> a different version number in the zip
+#   VERSION=1.4.8 ./build.sh    -> a different version number in the zip
 #   SLOW=1 ./build.sh           -> the kit's own build (tools/build_port.sh: the compiler under ARM emulation)
 #
 # Needs Docker and a checkout of mpc-vst-plugins next to this folder (or MPC_VST=/path/to/mpc-vst-plugins). Run it

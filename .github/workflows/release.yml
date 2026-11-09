@@ -1,4 +1,5 @@
-# Builds Odin 2 for MPC in GitHub Actions and attaches Odin-2-<version>-mpc-armv7.zip to a DRAFT release.
+# Builds Odin 2 for MPC in GitHub Actions and attaches Odin-2-<version>-mpc-armv7.zip (Gen1, MPC OS 2.x and 3.x) and
+# -mpc-aarch64.zip (Gen2) to a DRAFT release.
 # Actions -> Release -> Run workflow, enter the version. Install that zip on an MPC, check it, then publish the draft
 # (publishing creates the tag; the catalog picks it up). mpc-vst-plugins is pinned to one commit in both places below.
 name: Release
@@ -7,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Version, e.g. 1.4.4
+        description: Version, e.g. 1.4.7
         required: true
         type: string
       dry_run:

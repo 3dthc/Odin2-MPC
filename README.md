@@ -115,7 +115,7 @@ full build takes a few minutes on a typical PC and a small change seconds: the p
 core with the cross compiler (`tools/cross/Dockerfile`, `tools/arm.mk`; the same glibc 2.31 as the kit's own image,
 so the plugin loads on MPC OS 2.x and 3.x), only what changed is recompiled, and the skin is rebuilt only when the
 pages or their artwork changed (in the kit's `mpc-vst-html-art` container). The result is packaged with the kit's
-`tools/release.py` as `dist/Odin-2-1.4.1-mpc-armv7.zip`.
+`tools/release.py` as `dist/Odin-2-1.4.7-mpc-armv7.zip`.
 
 `SLOW=1 ./build.sh` builds the kit's way instead (`tools/build_port.sh`: the compiler under ARM emulation, 30-60
 minutes). If `mpc-vst-plugins` is somewhere else, run `MPC_VST=/path/to/mpc-vst-plugins ./build.sh`. If Docker
@@ -129,14 +129,14 @@ registers it and starts MPC again. **Save your project first.** From Ubuntu, wit
 
 ```
 cd ~/odin2-mpc/dist
-unzip Odin-2-1.4.1-mpc-armv7.zip
-scp -r Odin-2-1.4.1 root@<mpc-ip>:/tmp/
-ssh root@<mpc-ip> sh /tmp/Odin-2-1.4.1/install.sh
+unzip Odin-2-1.4.7-mpc-armv7.zip
+scp -r Odin-2-1.4.7 root@<mpc-ip>:/tmp/
+ssh root@<mpc-ip> sh /tmp/Odin-2-1.4.7/install.sh
 ```
 
 `INSTALL.md` in the zip has the same steps and the manual ones (copy the folder, edit `MPC.settings` yourself with
 MPC stopped). The plugin shows up as **Odin 2** (manufacturer 3dthc) in MPC's plugin browser.
-`ssh root@<mpc-ip> sh /tmp/Odin-2-1.4.1/uninstall.sh` removes it again.
+`ssh root@<mpc-ip> sh /tmp/Odin-2-1.4.7/uninstall.sh` removes it again.
 
 ## First test on the device
 
