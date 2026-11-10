@@ -106,6 +106,16 @@
 | 6 | Project | save, reload | same patch, edits, ECO and tune |
 | 7 | Bench | `../mpc-vst-plugins/tools/bench.sh vst/build/odin2.so <ip> -j` | PASS or WARN; record the result here |
 
+## 1.4.8: Gen2 (aarch64) flushes denormals to zero
+Issue #1 (MPC Live III, MPC OS 3.10, 1.4.6: "high CPU just from using the plugin"). The Gen2 build never set
+flush-to-zero: `juce::ScopedNoDenormals` (JuceLibraryCode/JuceHeader.h) did it for armv7 (FPSCR) and x86 (MXCSR) only,
+so on aarch64 the effect and filter tails decaying towards silence ran on denormal numbers. Measured on x86 with it
+off, every factory patch, a 4-note chord held 1 s then 10 s of tail: the tail's last 5 s cost 4.7x on average
+(up to 28x: Bass Low [RM] 31 -> 874 us a block), held notes +8 %. 1.4.8 sets FPCR.FZ while Odin renders and puts
+the caller's FPCR back after. Checked as aarch64 under qemu: a denormal product is 0 inside, kept outside, FPCR
+restored; `tools/engine_test.cpp` built for aarch64 passes. armv7 and x86 unchanged. On a Gen2 MPC check: play a
+pad with a long reverb, stop, and watch MPC's CPU meter fall back to its idle level.
+
 ## 1.4.7: looks, layout, a lighter engine
 Engine: the mod matrix skips voices that aren't sounding (a starting voice forces a control tick, so its modulation is
 worked out before its first sample), and at control rate (ECO Auto, Eco, Lite) the phaser works out its 24 all-pass

@@ -493,9 +493,18 @@ struct Decibels {
     static T gainToDecibels(T g, T minusInf = T(-100)) { return g > 0 ? std::max(minusInf, std::log10(g) * T(20)) : minusInf; }
 };
 
+/* Denormals flushed to zero while Odin renders, as JUCE does: effect and filter tails decaying towards silence would
+ * otherwise turn into denormal numbers, which cost many times more (x86, tools: a released chord's tail about 4.7x
+ * on average over the factory bank, up to 28x). 1.4.8: on aarch64 (Gen2) too, FPCR.FZ; 1.4.6-1.4.7 left it out. */
 struct ScopedNoDenormals {
     ScopedNoDenormals() {
-#if defined(__arm__) && !defined(__aarch64__)
+#if defined(__aarch64__)
+        uint64_t v;
+        asm volatile("mrs %0, fpcr" : "=r"(v));
+        saved64 = v;
+        v |= (uint64_t)1 << 24;            /* FPCR.FZ: flush-to-zero */
+        asm volatile("msr fpcr, %0" : : "r"(v));
+#elif defined(__arm__)
         asm volatile("vmrs %0, fpscr" : "=r"(saved));
         uint32_t v = saved | (1u << 24);   /* flush-to-zero */
         asm volatile("vmsr fpscr, %0" : : "r"(v));
@@ -506,13 +515,16 @@ struct ScopedNoDenormals {
 #endif
     }
     ~ScopedNoDenormals() {
-#if defined(__arm__) && !defined(__aarch64__)
+#if defined(__aarch64__)
+        asm volatile("msr fpcr, %0" : : "r"(saved64));
+#elif defined(__arm__)
         asm volatile("vmsr fpscr, %0" : : "r"(saved));
 #elif defined(__x86_64__) || defined(__i386__)
         asm volatile("ldmxcsr %0" : : "m"(saved));
 #endif
     }
     uint32_t saved = 0;
+    uint64_t saved64 = 0;
 };
 
 template <typename T>
