@@ -1,7 +1,10 @@
 # Builds Odin 2 for MPC in GitHub Actions and attaches Odin-2-<version>-mpc-armv7.zip (Gen1, MPC OS 2.x and 3.x) and
 # -mpc-aarch64.zip (Gen2) to a DRAFT release.
 # Actions -> Release -> Run workflow, enter the version. Install that zip on an MPC, check it, then publish the draft
-# (publishing creates the tag; the catalog picks it up). mpc-vst-plugins is pinned to one commit in both places below.
+# (publishing creates the tag; the catalog picks it up).
+# Release notes: write docs/releases/v<version>.md first -- what changed and what was fixed since the last release (not
+# install steps; those are in INSTALL.md inside the zip). The draft's notes are that file.
+# mpc-vst-plugins is pinned in both places below: the workflow (c6b4bb0 + notes from docs/releases) and its tools (c6b4bb0).
 name: Release
 
 on:
@@ -18,7 +21,7 @@ on:
 
 jobs:
   vst:
-    uses: 3dthc/mpc-vst-plugins/.github/workflows/vst-release.yml@c6b4bb0b4939bbf64e2017bd3c11d95a080799f9
+    uses: 3dthc/mpc-vst-plugins/.github/workflows/vst-release.yml@c2f5abf7ab537a5d1006262ac7ec47a7b37ac537
     permissions: { contents: write }
     with:
       tag: odin2-v${{ inputs.version }}
