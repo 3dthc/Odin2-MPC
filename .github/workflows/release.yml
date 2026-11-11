@@ -4,7 +4,7 @@
 # (publishing creates the tag; the catalog picks it up).
 # Release notes: write docs/releases/v<version>.md first -- what changed and what was fixed since the last release (not
 # install steps; those are in INSTALL.md inside the zip). The draft's notes are that file.
-# mpc-vst-plugins is pinned in both places below: the workflow (c6b4bb0 + notes from docs/releases) and its tools (c6b4bb0).
+# mpc-vst-plugins is pinned in both places below: the workflow and its tools (d584f67: notes from docs/releases, armv7 C++ built with GCC 10 for MPC OS 2.x's libstdc++).
 name: Release
 
 on:
@@ -21,12 +21,12 @@ on:
 
 jobs:
   vst:
-    uses: 3dthc/mpc-vst-plugins/.github/workflows/vst-release.yml@c2f5abf7ab537a5d1006262ac7ec47a7b37ac537
+    uses: 3dthc/mpc-vst-plugins/.github/workflows/vst-release.yml@d584f67a7ffb73138dae087ee8126e0108916f3d
     permissions: { contents: write }
     with:
       tag: odin2-v${{ inputs.version }}
       version: ${{ inputs.version }}
-      tools_ref: c6b4bb0b4939bbf64e2017bd3c11d95a080799f9
+      tools_ref: d584f67a7ffb73138dae087ee8126e0108916f3d
       vst_dir: vst
       build: '"$MPC_VST/tools/build_port.sh" vst/vst.json'
       host_test: '"$MPC_VST/tools/test_port.sh" vst/vst.json'
