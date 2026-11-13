@@ -98,21 +98,29 @@ looks after this itself; there is no voices knob to turn.
 
 Each release also has Odin 2 for a computer, with the same sound and touchscreen skin. A project saved on the MPC opens in MPC Desktop (controller mode) with the plugin in place.
 
-- **Mac, MPC Desktop and VST3 hosts:** `-macos-vst3.zip` (`.vst3`).
-- **Mac, Logic Pro and GarageBand:** `-macos-au.zip` (`.component`, the Audio Unit).
-- **Windows** (64-bit): `-windows-vst3.zip` is a single `.vst3` file; copy it into `C:\Program Files\Common Files\VST3`.
+### Installing on macOS (Audio Unit and VST3)
+**Which zip?**
+- **Logic Pro / GarageBand:** `<Name>-<version>-macos-au.zip` (the **Audio Unit**)
+- **MPC Desktop / other VST3 hosts:** `<Name>-<version>-macos-vst3.zip` (the **VST3**)
 
-Both Mac zips are universal (Apple Silicon and Intel). If macOS says the plugin "can't be verified", put the downloaded zips in Downloads and run this in Terminal. It installs and unblocks the VST3 and the Audio Unit alike, even though the zips' README only says VST3:
+Both work on **Apple Silicon and Intel** Macs. Download one or both.
 
+**1. Leave the zip(s) in your Downloads folder.** Unzipped or not, both are fine.
+
+**2. Open Terminal** (Applications › Utilities › Terminal), **paste this and press Return.** It installs the plugins and clears macOS's *"can't be verified"* block. No password needed.
 ```
 curl -fsSL https://raw.githubusercontent.com/3dthc/mpc-vst-plugins/desktop-vst3-openmpc/tools/install_mac_vst3.sh | bash
 ```
 
-To check every installed Audio Unit with Apple's validator (PASS or FAIL for each):
-
+**3. Check the Audio Unit:** paste this and press Return. **Every plugin should say `PASS`.**
 ```
 curl -fsSL https://raw.githubusercontent.com/3dthc/mpc-vst-plugins/desktop-vst3-openmpc/tools/install_mac_vst3.sh | bash -s -- --check
 ```
+
+**4. Restart Logic Pro** (it looks for new Audio Units when it starts), **or rescan plugins in MPC Desktop.**
+
+### Installing on Windows
+**64-bit.** `-windows-vst3.zip` is a single `.vst3` file; copy it into `C:\Program Files\Common Files\VST3`. Then rescan plugins in MPC Desktop or your DAW.
 
 ## Build (Ubuntu, Docker)
 
