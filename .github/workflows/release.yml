@@ -21,13 +21,13 @@ on:
 
 jobs:
   vst:
-    uses: 3dthc/mpc-vst-plugins/.github/workflows/vst-release.yml@6f3ff99c658656e73383459f8f692931f3015eb3
+    uses: 3dthc/mpc-vst-plugins/.github/workflows/vst-release.yml@84c7dc86b6067f8d2e624c4df4ea9a4187198409
     permissions: { contents: write }
     secrets: inherit   # optional Apple signing/notarization (mpc-vst-plugins docs/DESKTOP_VST3.md)
     with:
       tag: odin2-v${{ inputs.version }}
       version: ${{ inputs.version }}
-      tools_ref: 6f3ff99c658656e73383459f8f692931f3015eb3
+      tools_ref: 84c7dc86b6067f8d2e624c4df4ea9a4187198409
       vst_dir: vst
       build: '"$MPC_VST/tools/build_port.sh" vst/vst.json'
       host_test: '"$MPC_VST/tools/test_port.sh" vst/vst.json'
