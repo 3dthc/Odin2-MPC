@@ -94,6 +94,20 @@ looks after this itself; there is no voices knob to turn.
   with the project and stays as you set it when you change patches.
 - **STOP** silences everything at once: every voice, held notes, the arpeggiator, and the delay and reverb tails.
 
+## On a computer (MPC Desktop, Logic Pro, DAWs)
+
+Each release also has Odin 2 for a computer, with the same sound and touchscreen skin. A project saved on the MPC opens in MPC Desktop (controller mode) with the plugin in place.
+
+- **Mac, MPC Desktop and VST3 hosts:** `-macos-vst3.zip` (`.vst3`).
+- **Mac, Logic Pro and GarageBand:** `-macos-au.zip` (`.component`, the Audio Unit).
+- **Windows** (64-bit): `-windows-vst3.zip` is a single `.vst3` file; copy it into `C:\Program Files\Common Files\VST3`.
+
+Both Mac zips are universal (Apple Silicon and Intel). If macOS says the plugin "can't be verified", put the downloaded zips in Downloads and run this in Terminal. It installs and unblocks the VST3 and the Audio Unit alike, even though the zips' README only says VST3:
+
+```
+curl -fsSL https://raw.githubusercontent.com/3dthc/mpc-vst-plugins/desktop-vst3-openmpc/tools/install_mac_vst3.sh | bash
+```
+
 ## Build (Ubuntu, Docker)
 
 Put this folder next to your `mpc-vst-plugins` checkout, in the same Ubuntu folder you build the other ports from:
