@@ -1,5 +1,7 @@
 # Odin 2 for MPC
 
+[![Support me on Ko-fi](https://img.shields.io/badge/Support%20me%20on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/3dthc)
+
 ![Odin 2 on the MPC Live II: MAIN page](docs/screenshots/main.png)
 
 | OSC | FILTER | BROWSE |
