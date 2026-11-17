@@ -3,6 +3,7 @@
  *      loaded the way Odin loads it, in state and in sound
  *   2. a project state round-trips into a fresh instance, also after edits
  *   3. STOP silences a held chord with its reverb and delay tails; the polyphony limit holds
+ *   3g. the USER bank (1.4.10): .odin files from a folder, saved inside the project
  *   4. timings: preset load, state save, render per block (this machine, not the MPC)
  *   tools/engine_test.sh builds and runs it. */
 #include "odin_state.h"
@@ -42,6 +43,10 @@ static std::string get(const mpc_engine_t *e, void *s, const char *k) { char b[9
 
 int main(int argc, char **argv) {
     std::string bankdir = argc > 1 ? argv[1] : "presets_src/Soundbanks/Factory Presets";
+    // the USER bank's folder: empty for everything but 3g
+    char emptyTmpl[] = "/tmp/odin_user_emptyXXXXXX";
+    std::string emptyDir = mkdtemp(emptyTmpl);
+    setenv("ODIN2MPC_USER_DIR", emptyDir.c_str(), 1);
     const mpc_engine_t *e = mpc_engine();
     double t0 = now();
     void *s = e->create(nullptr);
@@ -316,6 +321,89 @@ int main(int argc, char **argv) {
         CHECK(get(e, y, "theme") == "1", "and its 2000 look stays 2000");
         e->destroy(x);
         e->destroy(y);
+    }
+
+    // 3g. the USER bank (1.4.10)
+    {
+        void *x = e->create(nullptr);
+        CHECK(get(e, x, "bank_slot_16") == " " && get(e, x, "preset:261") == "USER 1 (empty)",
+              "no user files: no USER bank, the bank is as before");
+        e->destroy(x);
+        char tmpl[] = "/tmp/odin_userXXXXXX";
+        std::string dir = mkdtemp(tmpl);
+        // two factory patches as user files, and a file that isn't a patch
+        std::string pa, pb;
+        DIR *d = opendir(bankdir.c_str());
+        std::vector<std::string> cats;
+        while (struct dirent *de = d ? readdir(d) : nullptr) if (de->d_name[0] != '.') cats.push_back(de->d_name);
+        if (d) closedir(d);
+        for (auto &c : cats) {
+            DIR *cd = opendir((bankdir + "/" + c).c_str());
+            while (struct dirent *de = cd ? readdir(cd) : nullptr) {
+                std::string n = de->d_name;
+                if (n.size() > 5 && n.substr(n.size() - 5) == ".odin") (pa.empty() ? pa : pb.empty() ? pb : n) = bankdir + "/" + c + "/" + n;
+            }
+            if (cd) closedir(cd);
+            if (!pb.empty()) break;
+        }
+        std::ofstream(dir + "/B mine.odin", std::ios::binary) << readFile(pa);
+        std::ofstream(dir + "/a mine.odin", std::ios::binary) << readFile(pb);
+        std::ofstream(dir + "/c broken.odin", std::ios::binary) << "not a patch";
+        std::ofstream(dir + "/notes.txt") << "x";
+        setenv("ODIN2MPC_USER_DIR", dir.c_str(), 1);
+        x = e->create(nullptr);
+        CHECK(get(e, x, "bank_slot_16") == "USER" && get(e, x, "preset:261") == "a mine" && get(e, x, "preset:262") == "B mine"
+              && get(e, x, "preset:263") == "c broken" && get(e, x, "preset:264") == "USER 4 (empty)",
+              "the USER bank: the folder's .odin files, by name (%s, %s)", get(e, x, "preset:261").c_str(), get(e, x, "preset:262").c_str());
+        // loaded the way Odin loads the file
+        void *ref = e->create(nullptr);
+        e->set_param(x, "preset", "262");
+        std::string sx = get(e, x, "state");
+        CHECK(get(e, x, "preset_name") == "B mine" && sx.find("userfile=B mine\n") != std::string::npos,
+              "a user patch loads and the project names it");
+        e->set_param(x, "bank_slot_16", "1");
+        CHECK(get(e, x, "patch_slot_2_on") == "1" && get(e, x, "browse_patch_display") == "B mine", "BROWSE shows it in USER");
+        note(e, x, 0x90, 60, 100);
+        double lvl = render(e, x, 200);
+        CHECK(lvl > 1e-4, "it plays (%.4f)", lvl);
+        note(e, x, 0x80, 60, 0);
+        std::string before = get(e, x, "preset_name");
+        e->set_param(x, "preset", "263");
+        CHECK(get(e, x, "preset_name") == before, "a file that isn't a patch doesn't load (still %s)", before.c_str());
+        e->set_param(x, "preset", "264");
+        void *init = e->create(nullptr);
+        e->set_param(init, "state", "odin2mpc=1\npreset=280\n");
+        CHECK(get(e, x, "preset_name") == "USER 4 (empty)" && get(e, init, "preset_name") == "USER 20 (empty)",
+              "an empty USER slot is the init patch, also from a project");
+        e->destroy(init);
+        // the project sounds the same without the file, and after it changed
+        e->set_param(x, "preset", "262");
+        e->set_param(x, "fil1_freq", "0.3");
+        sx = get(e, x, "state");
+        auto play = [&](void *y) {
+            e->set_param(y, "preset", "0"); e->set_param(y, "state", sx.c_str());
+            std::vector<int16_t> o; srand(7); note(e, y, 0x90, 57, 110); render(e, y, 120, &o); note(e, y, 0x80, 57, 0); render(e, y, 60, &o);
+            return o;
+        };
+        void *y1 = e->create(nullptr);
+        std::vector<int16_t> o1 = play(y1);
+        CHECK(get(e, y1, "preset_name") == "B mine" && get(e, y1, "fil1_freq") == get(e, x, "fil1_freq"),
+              "a project on a user patch reopens with its edits");
+        remove((dir + "/B mine.odin").c_str());
+        std::ofstream(dir + "/a mine.odin", std::ios::binary) << readFile(pa);   // and the other file changed
+        void *y2 = e->create(nullptr);
+        std::vector<int16_t> o2 = play(y2);
+        CHECK(o1 == o2 && get(e, y2, "preset_name") == "B mine", "and sounds the same with its file gone");
+        std::string sy = get(e, y2, "state");
+        void *y3 = e->create(nullptr);
+        e->set_param(y3, "state", sy.c_str());
+        CHECK(get(e, y3, "preset_name") == "B mine" && get(e, y3, "state") == sy, "saved again from there, it stays the same");
+        // a factory patch after a user one is the factory patch
+        e->set_param(y3, "preset", "42");
+        e->set_param(ref, "preset", "42");
+        CHECK(get(e, y3, "state") == get(e, ref, "state"), "a factory patch after a user patch loads clean");
+        for (void *z : {x, ref, y1, y2, y3}) e->destroy(z);
+        setenv("ODIN2MPC_USER_DIR", emptyDir.c_str(), 1);
     }
 
     // 4. render cost and the meter

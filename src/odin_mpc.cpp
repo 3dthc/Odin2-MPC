@@ -35,6 +35,13 @@ extern "C" {
 #include <unordered_map>
 #include <vector>
 #include <cstring>
+#include <algorithm>
+#include <string>
+#include <dirent.h>
+#include <sys/stat.h>
+#ifndef MPC_DESKTOP
+#include <dlfcn.h>
+#endif
 
 namespace {
 
@@ -81,7 +88,7 @@ struct Banks {
     int n = 0;
     const char *name[BANK_SLOTS];
     std::vector<int> patches[BANK_SLOTS];
-    Banks() {
+    Banks(int nuser = 0) {
         for (int i = 0; i < NBANK; i++) {
             int b = 0;
             while (b < n && strcmp(name[b], BANK[i].category)) b++;
@@ -91,6 +98,11 @@ struct Banks {
             }
             if ((int)patches[b].size() < PATCH_SLOTS) patches[b].push_back(i);
         }
+        if (nuser > 0 && n < BANK_SLOTS) {   // 1.4.10: the USER bank, .odin files from the User Presets folder
+            name[n] = "USER";
+            for (int u = 0; u < nuser && u < PATCH_SLOTS; u++) patches[n].push_back(NBANK + u);
+            n++;
+        }
     }
     int of(int preset) const {
         for (int b = 0; b < n; b++)
@@ -99,9 +111,80 @@ struct Banks {
         return 0;
     }
 };
-const Banks &banks() {
-    static const Banks b;
-    return b;
+
+/* 1.4.10: user patches. Their program numbers follow the bank's: NBANK .. NBANK + NUSER - 1 */
+const int NUSER = PATCH_SLOTS;
+struct UserPatch {
+    std::string name;   // the file name without .odin
+    std::string data;   // the file; empty for a patch a project kept whose file is gone
+    std::string lines;  // that patch: its differences from the init patch, as the project saved them
+};
+
+/* The folder: "User Presets" beside the plugin on the MPC; Documents/Odin2 MPC/User Presets on a desktop.
+ * ODIN2MPC_USER_DIR overrides both (tools/engine_test). */
+std::string userDir() {
+    if (const char *e = getenv("ODIN2MPC_USER_DIR")) return e;
+#ifdef MPC_DESKTOP
+#ifdef _WIN32
+    const char *home = getenv("USERPROFILE");
+#else
+    const char *home = getenv("HOME");
+#endif
+    if (!home || !*home) return "";
+    return std::string(home) + "/Documents/Odin2 MPC/User Presets";
+#else
+    Dl_info di;
+    if (!dladdr((void *)&userDir, &di) || !di.dli_fname) return "";
+    std::string so = di.dli_fname;
+    size_t sl = so.rfind('/');
+    return sl == std::string::npos ? "" : so.substr(0, sl) + "/User Presets";
+#endif
+}
+
+void makeDir(const std::string &d) {
+#ifdef _WIN32
+    mkdir(d.c_str());
+#else
+    mkdir(d.c_str(), 0755);
+#endif
+}
+
+/* the folder's .odin files (at most NUSER, by name); makes the folder if it isn't there so it's easy to find */
+std::vector<UserPatch> scanUser() {
+    std::vector<UserPatch> out;
+    std::string d = userDir();
+    if (d.empty()) return out;
+    DIR *dir = opendir(d.c_str());
+    if (!dir) {
+#ifdef MPC_DESKTOP
+        size_t sl = d.rfind('/');
+        if (sl != std::string::npos) makeDir(d.substr(0, sl));
+#endif
+        makeDir(d);
+        return out;
+    }
+    std::vector<std::string> names;
+    while (struct dirent *e = readdir(dir)) {
+        std::string n = e->d_name;
+        if (n.size() > 5 && n[0] != '.' && strcasecmp(n.c_str() + n.size() - 5, ".odin") == 0) names.push_back(n);
+    }
+    closedir(dir);
+    std::sort(names.begin(), names.end(), [](const std::string &a, const std::string &b) {
+        return strcasecmp(a.c_str(), b.c_str()) < 0;
+    });
+    for (auto &n : names) {
+        if ((int)out.size() >= NUSER) break;
+        FILE *f = fopen((d + "/" + n).c_str(), "rb");
+        if (!f) continue;
+        std::string data;
+        char buf[16384];
+        size_t r;
+        while ((r = fread(buf, 1, sizeof buf, f)) > 0 && data.size() < (4u << 20)) data.append(buf, r);
+        fclose(f);
+        if (data.empty()) continue;
+        out.push_back({n.substr(0, n.size() - 5), data, ""});
+    }
+    return out;
 }
 
 /* Each factory patch's measured load on the MPC Live II (tools/patch_cost.sh, calibrated on the device): tenths of a
@@ -114,6 +197,19 @@ const BankCost BANK_COST[] = {
 #include "presets/bank_cost.inc"
 };
 static_assert(sizeof BANK_COST / sizeof BANK_COST[0] == NBANK, "bank_cost.inc doesn't match the bank");
+
+/* a user patch hasn't been measured: start from a heavy factory patch's cost (the 80th percentile), and let the
+ * budget follow what it measures */
+const BankCost &userCost() {
+    static const BankCost c = [] {
+        std::vector<unsigned short> a, b, e;
+        for (int i = 0; i < NBANK; i++) a.push_back(BANK_COST[i].voiceOff), b.push_back(BANK_COST[i].voiceCtrl), e.push_back(BANK_COST[i].base);
+        std::sort(a.begin(), a.end()), std::sort(b.begin(), b.end()), std::sort(e.begin(), e.end());
+        int k = NBANK * 8 / 10;
+        return BankCost{a[k], b[k], e[k]};
+    }();
+    return c;
+}
 
 /* Voices: Odin has 24; this plugin lets at most VOICE_CEILING sound (the "polyphony" control, kept for automation
  * and old projects, no longer on the page), and fewer when the patch is heavy: as many as fit in VOICE_BUDGET % of
@@ -150,6 +246,19 @@ struct Instance {
     OdinAudioProcessor odin;
     std::unordered_map<std::string, int> index;   // control key -> CONTROLS index
     int preset = 0;
+    std::vector<UserPatch> user;   // the USER bank (1.4.10)
+    Banks bk;
+    const Banks &banks() const { return bk; }
+    const char *nameOf(int p) const {
+        if (p >= 0 && p < NBANK) return BANK[p].name;
+        int u = p - NBANK;
+        if (u >= 0 && u < (int)user.size()) return user[u].name.c_str();
+        if (u < 0 || u >= NUSER) return "";
+        snprintf(emptyName, sizeof emptyName, "USER %d (empty)", u + 1);
+        return emptyName;
+    }
+    mutable char emptyName[24];
+    bool emptySlot(int p) const { return p >= NBANK + (int)user.size(); }
     OdinMPC::Lines presetState;                    // snapshot right after the current preset was loaded
 
     uint8_t midi[MAX_MIDI][3];
@@ -207,7 +316,7 @@ struct Instance {
         odin.m_master_tune = tuneHz == 440.f ? 1.f : tuneHz / 440.f;
     }
 
-    Instance() {
+    Instance() : user(scanUser()), bk((int)user.size()) {
         for (int i = 0; i < NCONTROLS; i++) index[CONTROLS[i].key] = i;
         odin.prepare(44100.f);
         loadPreset(0);
@@ -219,16 +328,31 @@ struct Instance {
 
     /* Load bank preset n: work out its whole state (init patch plus its stored differences) and apply only what
      * differs from the current state, so a preset that keeps the drawn wavetables doesn't rebuild them. */
-    void loadPreset(int n) {
-        if (n < 0 || n >= NBANK) return;
+    void loadPreset(int n, bool asEmpty = false) {
+        if (n < 0 || n >= NBANK + NUSER) return;   // an empty USER slot loads the init patch
         odin.panic();
         if (initState.empty()) {
             odin.loadPatchFromMemory(BinaryData::init_patch_odin, BinaryData::init_patch_odinSize);
             initState = OdinMPC::snapshot(odin);
         }
-        OdinMPC::Lines target = OdinMPC::overlay(initState, OdinMPC::parse(BANK[n].state));
-        OdinMPC::apply(odin, OdinMPC::diff(OdinMPC::snapshot(odin), target));
-        odin.m_value_tree.state.getChildWithName("misc").setProperty("patch_name", String(BANK[n].name), nullptr);
+        OdinMPC::Lines target;
+        bool empty = n >= NBANK && (asEmpty || emptySlot(n));
+        const UserPatch *u = n >= NBANK && !empty ? &user[n - NBANK] : nullptr;
+        if (empty) {
+            target = initState;
+            OdinMPC::apply(odin, OdinMPC::diff(OdinMPC::snapshot(odin), target));
+        } else if (u && !u->data.empty()) {   // a .odin file: Odin's own reader (it migrates older patches)
+            OdinMPC::Lines before = OdinMPC::snapshot(odin);
+            if (!odin.loadPatchFromMemory(u->data.data(), u->data.size())) {
+                OdinMPC::apply(odin, OdinMPC::diff(OdinMPC::snapshot(odin), before));   // not a patch: nothing changes
+                return;
+            }
+            target = OdinMPC::snapshot(odin);
+        } else {
+            target = OdinMPC::overlay(initState, OdinMPC::parse(u ? u->lines.c_str() : BANK[n].state));
+            OdinMPC::apply(odin, OdinMPC::diff(OdinMPC::snapshot(odin), target));
+        }
+        odin.m_value_tree.state.getChildWithName("misc").setProperty("patch_name", String(nameOf(n)), nullptr);
         odin.resetAudioEngine();   // as Odin does after a patch loads (voices, filters, LFOs, envelopes)
         preset = n;
         presetState = target;
@@ -237,10 +361,33 @@ struct Instance {
         ++displayRev;   // every control may have moved
     }
 
+    /* a project saved on a user patch: its lines are the whole sound (differences from the init patch). It loads
+     * from them, not from the file, so it sounds as saved even if the file changed; the USER entry of that name is
+     * marked loaded, or, when there's no such file, the patch is kept as a USER entry of its own. */
+    void loadUserState(const std::string &name, const OdinMPC::Lines &lines) {
+        int u = 0;
+        while (u < (int)user.size() && user[u].name != name) u++;
+        std::string text;
+        for (auto &kv : lines) text += kv.first + "=" + kv.second + "\n";
+        if (u == (int)user.size()) {
+            if (u >= NUSER) u = NUSER - 1, user.resize(NUSER - 1);
+            user.push_back({name, "", text});
+            bk = Banks((int)user.size());
+        }
+        UserPatch keep = user[u];
+        user[u].data.clear(), user[u].lines = text;
+        loadPreset(NBANK + u);
+        if (!keep.data.empty()) user[u] = keep;   // picking it again from the bank loads the file
+    }
+
     // ---- project state: "preset=<n>" then what changed since that preset was loaded
     std::string saveState() {
         OdinMPC::Lines changed = OdinMPC::diff(presetState, OdinMPC::snapshot(odin));
         std::string s = "odin2mpc=1\npreset=" + std::to_string(preset) + "\n";
+        if (preset >= NBANK && !emptySlot(preset)) {   // a user patch: its name, and the whole sound, so the project doesn't need the file
+            s += "userfile=" + user[preset - NBANK].name + "\n";
+            changed = OdinMPC::diff(initState, OdinMPC::snapshot(odin));
+        }
         if (ceiling != VOICE_CEILING) s += "voices=" + std::to_string(ceiling) + "\n";
         if (eco != ECO_AUTO) s += "eco=" + std::to_string(eco) + "\n";
         if (theme) s += "look=" + std::to_string(theme) + "\n";   // 1.4.7: "look" (1.4-1.4.6 saved "theme", another list)
@@ -265,10 +412,13 @@ struct Instance {
         int n = 0, poly = VOICE_CEILING, e = ECO_AUTO;   // a state saved before ECO existed: Auto
         float tune = 440.f;
         int th = 0;
+        std::string userfile;
+        bool isUser = false;
         OdinMPC::Lines rest;
         for (auto &kv : lines) {
             if (kv.first == "odin2mpc") continue;
             else if (kv.first == "preset") n = atoi(kv.second.c_str());
+            else if (kv.first == "userfile") userfile = kv.second, isUser = true;
             else if (kv.first == "polyphony") continue;   // 1.0-1.2's VOICES knob: the budget does this now
             else if (kv.first == "voices") poly = atoi(kv.second.c_str());
             else if (kv.first == "eco") e = atoi(kv.second.c_str());
@@ -280,8 +430,12 @@ struct Instance {
             }
             else rest.push_back(kv);
         }
-        loadPreset(n);
-        if (!rest.empty()) OdinMPC::apply(odin, rest);
+        if (isUser) loadUserState(userfile, rest);
+        else {
+            if (n >= NBANK + NUSER) n = 0;
+            loadPreset(n, n >= NBANK);   // saved on an empty USER slot: the init patch, even if a file is there now
+            if (!rest.empty()) OdinMPC::apply(odin, rest);
+        }
         setPolyphony(poly);
         setEco(e);
         setTune(tune);
@@ -383,7 +537,7 @@ struct Instance {
 
     /* after a patch loads: start from its measured costs */
     void startBudget() {
-        const BankCost &c = BANK_COST[preset];
+        const BankCost &c = preset < NBANK ? BANK_COST[preset] : userCost();
         hintCost = voiceCost = (eco == ECO_OFF ? c.voiceOff : c.voiceCtrl) / 10.f;
         baseCost = c.base / 10.f;
         raiseFrames = 0;
@@ -739,13 +893,13 @@ int get_param(void *inst, const char *key, char *buf, int len) {
     Instance *s = (Instance *)inst;
     if (!strcmp(key, "state")) return snprintf(buf, len, "%s", s->saveState().c_str());
     if (!strcmp(key, "display_rev")) return snprintf(buf, len, "%u", s->displayRev);
-    if (!strcmp(key, "browse_bank_display")) return snprintf(buf, len, "%s", banks().name[s->browseBank]);
+    if (!strcmp(key, "browse_bank_display")) return snprintf(buf, len, "%s", s->banks().name[s->browseBank]);
     if (!strcmp(key, "browse_patch_display")) {
         int at = s->browseIndex();
-        return snprintf(buf, len, "%s", at < 0 ? "-" : BANK[s->preset].name);
+        return snprintf(buf, len, "%s", at < 0 ? "-" : s->nameOf(s->preset));
     }
-    if (!strcmp(key, "bank_name")) return snprintf(buf, len, "%s", banks().name[s->browseBank]);
-    if (!strcmp(key, "preset_name")) return snprintf(buf, len, "%s", BANK[s->preset].name);   // its bank: BROWSE
+    if (!strcmp(key, "bank_name")) return snprintf(buf, len, "%s", s->banks().name[s->browseBank]);
+    if (!strcmp(key, "preset_name")) return snprintf(buf, len, "%s", s->nameOf(s->preset));   // its bank: BROWSE
     if (!strcmp(key, "preset_count")) return snprintf(buf, len, "%d", NBANK);
     if (!strcmp(key, "voices_active")) return snprintf(buf, len, "%d", s->lastActive);   // tools
     if (!strcmp(key, "notes_held")) {   // tools: how many keys have a voice sounding, not released
@@ -760,8 +914,9 @@ int get_param(void *inst, const char *key, char *buf, int len) {
     }
     if (!strncmp(key, "preset:", 7)) {   // program names for MPC's PRESET menu
         int n = atoi(key + 7);
-        if (n < 0 || n >= NBANK) return 0;
-        return snprintf(buf, len, "%s", BANK[n].name);
+        if (n < 0 || n >= NBANK + NUSER) return 0;
+        if (n >= NBANK + (int)s->user.size()) return snprintf(buf, len, "USER %d (empty)", n - NBANK + 1);
+        return snprintf(buf, len, "%s", s->nameOf(n));
     }
     size_t kl = strlen(key);
     if (kl == 15 && !strcmp(key + 10, "_name") && !strncmp(key, "osc", 3)) {   // oscN_shape_name
@@ -784,14 +939,14 @@ int get_param(void *inst, const char *key, char *buf, int len) {
         const char *rest = key + (bank ? 10 : 11);
         int i = atoi(rest) - 1;
         bool on = strstr(rest, "_on") != nullptr;
-        const Banks &bk = banks();
+        const Banks &bk = s->banks();
         if (bank) {
             if (i < 0 || i >= bk.n) return on ? snprintf(buf, len, "0") : snprintf(buf, len, " ");
             return on ? snprintf(buf, len, "%d", i == s->browseBank) : snprintf(buf, len, "%s", bk.name[i]);
         }
         const std::vector<int> &ps = bk.patches[s->browseBank];
         if (i < 0 || i >= (int)ps.size()) return on ? snprintf(buf, len, "0") : snprintf(buf, len, " ");
-        return on ? snprintf(buf, len, "%d", ps[i] == s->preset) : snprintf(buf, len, "%s", BANK[ps[i]].name);
+        return on ? snprintf(buf, len, "%d", ps[i] == s->preset) : snprintf(buf, len, "%s", s->nameOf(ps[i]));
     }
     if (kl > 8 && !strcmp(key + kl - 8, "_display")) {
         auto it = s->index.find(std::string(key, kl - 8));
