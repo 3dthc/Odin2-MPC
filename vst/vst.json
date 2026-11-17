@@ -89,5 +89,6 @@
     "aarch64"
   ],
   "au_vendor": "3dthc",
-  "au_manufacturer": "3Dth"
+  "au_manufacturer": "3Dth",
+  "tile": "tile.png"
 }
