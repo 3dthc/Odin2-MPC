@@ -18,16 +18,20 @@ on:
         description: Build and package only (zip and page previews as run artifacts), no draft release
         type: boolean
         default: false
+      replace:
+        description: Replace the zips of this version's published release (a fix nobody has installed yet)
+        type: boolean
+        default: false
 
 jobs:
   vst:
-    uses: 3dthc/mpc-vst-plugins/.github/workflows/vst-release.yml@797e5ee9cf35261f0cf0c1770b3d26a2109c0a87
+    uses: 3dthc/mpc-vst-plugins/.github/workflows/vst-release.yml@c4bef5d35b009f0603cf2326c4ab425932628483
     permissions: { contents: write }
     secrets: inherit   # optional Apple signing/notarization (mpc-vst-plugins docs/DESKTOP_VST3.md)
     with:
       tag: odin2-v${{ inputs.version }}
       version: ${{ inputs.version }}
-      tools_ref: 797e5ee9cf35261f0cf0c1770b3d26a2109c0a87
+      tools_ref: c4bef5d35b009f0603cf2326c4ab425932628483
       vst_dir: vst
       build: '"$MPC_VST/tools/build_port.sh" vst/vst.json'
       host_test: '"$MPC_VST/tools/test_port.sh" vst/vst.json'
@@ -35,4 +39,5 @@ jobs:
       plugin_id: odin2
       license: GPL-3.0-only
       dry_run: ${{ inputs.dry_run }}
+      replace_published: ${{ inputs.replace }}
       desktop: true
