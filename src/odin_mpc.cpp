@@ -896,6 +896,11 @@ int get_param(void *inst, const char *key, char *buf, int len) {
     Instance *s = (Instance *)inst;
     if (!strcmp(key, "state")) return snprintf(buf, len, "%s", s->saveState().c_str());
     if (!strcmp(key, "display_rev")) return snprintf(buf, len, "%u", s->displayRev);
+    if (!strncmp(key, "preset_category:", 16)) {   // its bank, for the Sounds browser's folders (tools/xpl_presets.sh)
+        int n = atoi(key + 16);
+        if (n >= 0 && n < NBANK) return snprintf(buf, len, "%s", BANK[n].category);
+        return n >= NBANK && n < NBANK + NUSER ? snprintf(buf, len, "USER") : 0;
+    }
     if (!strcmp(key, "browse_bank_display")) return snprintf(buf, len, "%s", s->banks().name[s->browseBank]);
     if (!strcmp(key, "browse_patch_display")) {
         int at = s->browseIndex();

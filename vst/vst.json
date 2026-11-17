@@ -92,5 +92,6 @@
   "au_manufacturer": "3Dth",
   "tile": "tile.png",
   "xpl_presets": "xpl",
-  "xpl_skip": "^USER \\d+ \\(empty\\)$"
+  "xpl_skip": "^USER \\d+ \\(empty\\)$",
+  "xpl_category": "engine"
 }
