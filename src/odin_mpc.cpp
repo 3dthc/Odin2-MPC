@@ -39,6 +39,9 @@ extern "C" {
 #include <string>
 #include <dirent.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 #ifndef MPC_DESKTOP
 #include <dlfcn.h>
 #endif
@@ -143,7 +146,7 @@ std::string userDir() {
 
 void makeDir(const std::string &d) {
 #ifdef _WIN32
-    mkdir(d.c_str());
+    _mkdir(d.c_str());
 #else
     mkdir(d.c_str(), 0755);
 #endif
