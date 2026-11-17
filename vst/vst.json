@@ -90,5 +90,7 @@
   ],
   "au_vendor": "3dthc",
   "au_manufacturer": "3Dth",
-  "tile": "tile.png"
+  "tile": "tile.png",
+  "xpl_presets": "xpl",
+  "xpl_skip": "^USER \\d+ \\(empty\\)$"
 }
