@@ -1963,6 +1963,14 @@
    "qlink_ticks": 5,
    "dynamic_display": true,
    "refresh_display": true
+  },
+  {
+   "key": "cores",
+   "name": "Cores",
+   "options": [
+    "One",
+    "Two"
+   ]
   }
  ]
 }

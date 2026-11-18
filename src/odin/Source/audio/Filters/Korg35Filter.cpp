@@ -104,6 +104,8 @@ double Korg35Filter::doFilter(double xn) {
 		m_LPF1.doFilter(m_HPF2.doFilter(y));
 	}
 	y /= m_k_modded;
+	if (!m_is_lowpass && m_overshoot < 1.)
+		y *= hpTrim(2); // odin2-mpc: ECO Ultra (OdinFilterBase.h)
 
 	// make this one a bit easier (3.f), its very aggresive
 	applyOverdrive(y, 3.f);

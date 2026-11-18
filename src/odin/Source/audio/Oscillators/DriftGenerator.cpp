@@ -14,6 +14,7 @@
 */
 
 #include "DriftGenerator.h"
+#include "../OdinRand.h" // odin2-mpc
 #include "../../GlobalIncludes.h"
 #include "stdlib.h"
 
@@ -55,6 +56,6 @@ void DriftGenerator::calcNewCoeffs() {
 }
 
 float DriftGenerator::getRand() {
-	float random = (float)rand();
+	float random = (float)odin_rand();
 	return 2.f * ((float)random / (float)RAND_MAX) - 1.f;
 }

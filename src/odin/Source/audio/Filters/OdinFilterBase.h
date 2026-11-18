@@ -59,9 +59,13 @@ public:
 
 		if (m_freq_modded > FILTER_FC_MAX)
 			m_freq_modded = FILTER_FC_MAX;
-		// odin2-mpc: below 44.1 kHz (ECO Ultra) also under the sample rate's Nyquist, where these filters stay stable
-		if (m_samplerate > 0 && m_samplerate < 44000. && m_freq_modded > 0.45 * m_samplerate)
+		// odin2-mpc: below 44.1 kHz (ECO Ultra) also under the sample rate's Nyquist, where these filters stay stable;
+		// m_overshoot (< 1) is how far short of the cutoff asked for that leaves it (see hpTrim)
+		m_overshoot = 1.;
+		if (m_samplerate > 0 && m_samplerate < 44000. && m_freq_modded > 0.45 * m_samplerate) {
+			m_overshoot   = 0.45 * m_samplerate / m_freq_modded;
 			m_freq_modded = 0.45 * m_samplerate;
+		}
 		if (m_freq_modded < FILTER_FC_MIN)
 			m_freq_modded = FILTER_FC_MIN;
 	}
@@ -112,6 +116,14 @@ protected:
 	float m_mod_dummy_zero = 0;
 
 	double m_samplerate = -1;
+	// odin2-mpc: a high-pass held under Nyquist passes what the cutoff asked for would have cut: its output takes the
+	// attenuation that cutoff gives at Nyquist, (held / asked)^order (12 dB/octave: order 2)
+	double m_overshoot = 1.;
+	inline double hpTrim(int order) const {
+		double t = 1.;
+		for (int i = 0; i < order; ++i) t *= m_overshoot;
+		return t;
+	}
 	double m_one_over_samplerate;
 	double m_freq_modded = FILTER_FC_DEFAULT;
 	double m_res_modded  = FILTER_Q_DEFAULT;

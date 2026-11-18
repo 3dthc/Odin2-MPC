@@ -396,6 +396,36 @@ void OdinAudioProcessor::processStereo(float *p_left, float *p_right, int p_fram
 			} // voice active
 		}     // voice loop
 
+		// odin2-mpc: TWO CORES (see PluginProcessor.h)
+		if (m_voices_only) {
+			m_vo_out[0][sample] = stereo_signal[0];
+			m_vo_out[1][sample] = stereo_signal[1];
+			m_vo_done->store(sample + 1, std::memory_order_release);
+			continue;
+		}
+		if (m_twin_done) {
+			int spins = 0;
+			bool ready = true;
+			while (m_twin_done->load(std::memory_order_acquire) <= sample) {
+				if (++spins >= 256) {
+					spins = 0;
+					if (std::chrono::duration_cast<std::chrono::nanoseconds>(
+					        std::chrono::steady_clock::now().time_since_epoch())
+					        .count() > m_twin_deadline) {
+						ready = false;
+						break;
+					}
+				}
+			}
+			if (ready) {
+				stereo_signal[0] += m_twin_out[0][sample];
+				stereo_signal[1] += m_twin_out[1][sample];
+			} else {
+				m_twin_late += p_frames - sample;
+				m_twin_done = nullptr; // the rest of this block without it
+			}
+		}
+
 		for (int channel = 0; channel < 2; ++channel) {
 
 			//===== FILTER 3 ======

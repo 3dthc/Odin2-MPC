@@ -14,6 +14,7 @@
 */
 
 #pragma once
+#include "OdinRand.h" // odin2-mpc
 
 #include "include/Tunings.h"
 #include "../GlobalIncludes.h"
@@ -125,7 +126,7 @@ struct Voice {
 	}
 
 	void generateNewRandomValue() {
-		random_modulation = 2.f * ((float)rand() / (float)RAND_MAX) - 1.f;
+		random_modulation = 2.f * ((float)odin_rand() / (float)RAND_MAX) - 1.f;
 	}
 
 	float MIDINoteToFreq(int p_MIDI_note) {

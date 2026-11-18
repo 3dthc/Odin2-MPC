@@ -14,6 +14,7 @@
 */
 
 #pragma once
+#include "../OdinRand.h" // odin2-mpc
 
 #include "WavetableOsc1D.h"
 
@@ -58,7 +59,7 @@ public:
 	}
 
 	float getBipolarRandom() {
-		float white_noise = (float)rand();
+		float white_noise = (float)odin_rand();
 		return 2 * (white_noise / RAND_MAX) - 1;
 	}
 

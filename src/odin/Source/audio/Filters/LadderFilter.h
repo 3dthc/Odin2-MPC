@@ -178,6 +178,8 @@ public:
     double output =
         m_a * dU + m_b * dLP1 + m_c * dLP2 + m_d * dLP3 + m_e * dLP4;
 
+    if (m_overshoot < 1. && (m_filter_type == FILTERTYPE::HP4 || m_filter_type == FILTERTYPE::HP2))
+      output *= hpTrim(m_filter_type == FILTERTYPE::HP4 ? 4 : 2); // odin2-mpc: ECO Ultra (OdinFilterBase.h)
     applyOverdrive(output);
 
     return output;

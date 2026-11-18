@@ -233,6 +233,7 @@ special("bank_prev", "Prev Bank", momentary=True)
 special("bank_next", "Next Bank", momentary=True)
 special("browse_bank", "BANK")     # BROWSE Q-Link 1: the bank only (1.4.1)
 special("browse_patch", "PATCH")   # BROWSE Q-Link 2: a patch of that bank only (1.4.1)
+special("cores", "Cores", options=["One", "Two"])   # 1.4.11: TWO CORES, half the notes on a second processor
 
 
 def build():
@@ -281,6 +282,8 @@ def build():
             elif key == "eco":
                 p.update({"options": ex["options"], "default": 1})
             elif key == "eco_active":   # read-only: lights while ECO is changing what plays
+                p.update({"options": ex["options"]})
+            elif key == "cores":   # 1.4.11: One or Two
                 p.update({"options": ex["options"]})
             elif key.endswith("_shape"):
                 p.update({"min": 0.0, "max": 1.0, "dynamic_display": True, "dynamic_name": True})

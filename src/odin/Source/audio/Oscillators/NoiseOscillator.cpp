@@ -14,6 +14,7 @@
 */
 
 #include "NoiseOscillator.h"
+#include "../OdinRand.h" // odin2-mpc
 //#include "../JuceLibraryCode/JuceHeader.h"
 #include "stdlib.h"
 
@@ -35,7 +36,7 @@ float NoiseOscillator::doNoise() {
 	m_lowpass.update();
 	m_highpass.update();
 
-	float white_noise = (float)rand();
+	float white_noise = (float)odin_rand();
 	white_noise       = 2 * (white_noise / RAND_MAX) - 1;
 
 	// do 2nd order like this?

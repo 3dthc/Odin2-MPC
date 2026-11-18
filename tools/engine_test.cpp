@@ -13,6 +13,7 @@ extern "C" {
 #include <chrono>
 #include <thread>
 #include <cmath>
+#include <algorithm>
 #include <dirent.h>
 #include <fstream>
 #include <sstream>
@@ -143,7 +144,7 @@ int main(int argc, char **argv) {
             void *x = e->create(nullptr);
             e->set_param(x, "preset", std::to_string(preset).c_str());
             e->set_param(x, "eco", eco);
-            srand(1);
+            odin_srand(1);
             for (int k = 0; k < 4; k++) note(e, x, 0x90, 48 + 5 * k, 100);
             double t = now();
             render(e, x, 200, &out);
@@ -172,11 +173,41 @@ int main(int argc, char **argv) {
                h0, h2, h3, h4);
         // 1.4.11 ECO Ultra: half the sample rate. Plays at Lite's level, at well under Lite's cost, nothing above Nyquist
         {
+            // the level, over the whole factory bank (two seeds each: many patches have random modulation)
             double r3 = 0, r4 = 0;
             for (int16_t v : b3) r3 += (double)v * v;
             for (int16_t v : b4) r4 += (double)v * v;
-            double ratio = sqrt(r4 / (r3 + 1e-9));
-            CHECK(ratio > 0.6 && ratio < 1.5, "ECO Ultra plays Alien Chaos2 at about Lite's level (%.2f)", ratio);
+            {
+                void *q = e->create(nullptr);
+                std::vector<double> db;
+                for (int p = 0; p < 261; p++) {
+                    double lv[2];
+                    for (int m = 0; m < 2; m++) {
+                        e->set_param(q, "eco", m ? "4" : "3");
+                        double tot = 0;
+                        for (int seed = 1; seed <= 2; seed++) {
+                            e->set_param(q, "preset", std::to_string(p).c_str());
+                            odin_srand(seed);
+                            for (int j = 0; j < 3; j++) note(e, q, 0x90, 48 + 7 * j, 100);
+                            std::vector<int16_t> o;
+                            render(e, q, 120, &o);
+                            for (int16_t v : o) tot += (double)v * v;
+                            for (int j = 0; j < 3; j++) note(e, q, 0x80, 48 + 7 * j, 0);
+                            e->set_param(q, "panic", "1");
+                            render(e, q, 4);
+                        }
+                        lv[m] = tot;
+                    }
+                    if (lv[0] > 1e3) db.push_back(10 * log10((lv[1] + 1) / (lv[0] + 1)));
+                }
+                e->destroy(q);
+                std::sort(db.begin(), db.end());
+                int near = 0;
+                for (double d : db) near += fabs(d) < 1.5;
+                double median = db[db.size() / 2];
+                CHECK(fabs(median) < 0.5 && near > (int)db.size() * 8 / 10,
+                      "ECO Ultra's level: median %.2f dB from Lite, %d of %d patches within 1.5 dB", median, near, (int)db.size());
+            }
             CHECK(h4 < h3 * 0.85, "ECO Ultra costs clearly less than Lite (wall clock here; about 40 %% fewer instructions) (%.0f vs %.0f us)", h4, h3);
             // a bright patch held high: the energy above 11.5 kHz (what half rate can't make, so only filter leakage
             // or aliasing could put there) next to the energy below
@@ -208,7 +239,7 @@ int main(int argc, char **argv) {
             for (void *v : {v1, v2}) {
                 e->set_param(v, "preset", std::to_string(heavy).c_str());
                 e->set_param(v, "eco", "4");
-                srand(3);
+                odin_srand(3);
                 note(e, v, 0x90, 60, 100);
             }
             std::vector<int16_t> s1, s2;
@@ -350,9 +381,9 @@ int main(int argc, char **argv) {
         void *a = e->create(nullptr), *b = e->create(nullptr), *c = e->create(nullptr);
         e->set_param(b, "tune", "0.5");
         e->set_param(c, "tune", "1");
-        srand(1); std::vector<int16_t> pa = play(a);
-        srand(1); std::vector<int16_t> pb = play(b);
-        srand(1); std::vector<int16_t> pc = play(c);
+        odin_srand(1); std::vector<int16_t> pa = play(a);
+        odin_srand(1); std::vector<int16_t> pb = play(b);
+        odin_srand(1); std::vector<int16_t> pc = play(c);
         CHECK(get(e, a, "tune_display") == "440.0 Hz" && pa == pb && pa != pc && get(e, c, "tune_display") == "465.0 Hz",
               "master tune: 440 Hz by default and unchanged sound, 465 Hz plays higher");
         e->set_param(c, "preset", "5");
@@ -441,6 +472,159 @@ int main(int argc, char **argv) {
         e->destroy(x);
     }
 
+    // 3h. TWO CORES (1.4.11): a second processor plays half the notes
+    {
+        auto twin = [&](void *x) {   // voices here, on the twin (-1: none), late samples
+            std::string t = get(e, x, "test_twin");
+            int a = 0, b = 0, c = 0;
+            sscanf(t.c_str(), "%d,%d,%d", &a, &b, &c);
+            return std::vector<int>{a, b, c};
+        };
+        auto find = [&](const char *name) {
+            void *q = e->create(nullptr);
+            int at = -1;
+            for (int n = 0; n < 261 && at < 0; n++)
+                if (get(e, q, ("preset:" + std::to_string(n)).c_str()) == name) at = n;
+            e->destroy(q);
+            return at;
+        };
+        int pad = find("Electric Piano [tx]");
+        void *one = e->create(nullptr), *two = e->create(nullptr);
+        CHECK(get(e, two, "cores") == "0" && twin(two)[1] == -1, "CORES starts at One, no second processor");
+        for (void *x : {one, two}) {
+            e->set_param(x, "preset", std::to_string(pad).c_str());
+            e->set_param(x, "eco", "0");
+            e->set_param(x, "budget_test_fixed", "1");   // the voice budget out of the way: every note sounds on both
+        }
+        e->set_param(two, "cores", "1");
+        CHECK(get(e, two, "cores") == "1" && twin(two)[1] == 0, "CORES Two starts the second processor");
+        const int chord[] = {48, 52, 55, 59, 62, 67};
+        std::vector<int16_t> o1, o2;
+        for (void *x : {one, two}) {
+            odin_srand(5);
+            for (int n : chord) note(e, x, 0x90, n, 100);
+        }
+        render(e, one, 300, &o1);
+        render(e, two, 300, &o2);
+        std::vector<int> t = twin(two);
+        CHECK(t[0] > 0 && t[1] > 0 && t[2] == 0, "the notes are split between both (%d here, %d on the twin)", t[0], t[1]);
+        double r1 = 0, r2 = 0;
+        for (int16_t v : o1) r1 += (double)v * v;
+        for (int16_t v : o2) r2 += (double)v * v;
+        double ratio = sqrt(r2 / (r1 + 1));
+        CHECK(ratio > 0.9 && ratio < 1.1, "two processors play the chord as loud as one (%.3f)", ratio);
+        // and the same sound, 128 frames later (the twin's lead): compare one processor's output with two's, shifted
+        {
+            double best = 0;
+            int bestLag = -1;
+            for (int lag = 0; lag <= 256; lag += 2) {
+                double num = 0, d1 = 0, d2 = 0;
+                for (size_t i = 20000; i + lag < o2.size() && i < 60000; i++) {
+                    double a = o1[i], b = o2[i + lag];
+                    num += a * b, d1 += a * a, d2 += b * b;
+                }
+                double c = num / sqrt(d1 * d2 + 1);
+                if (c > best) best = c, bestLag = lag / 2;
+            }
+            CHECK(bestLag == 128 && best > 0.9, "the same chord, %d frames later (correlation %.3f)", bestLag, best);
+        }
+        // its notes end where they started
+        for (int n : chord) note(e, two, 0x80, n, 0);
+        render(e, two, 1500);
+        t = twin(two);
+        CHECK(t[0] == 0 && t[1] == 0, "their note-offs reach the processor that plays them (%d, %d left)", t[0], t[1]);
+        // STOP reaches both
+        for (int n : chord) note(e, two, 0x90, n, 100);
+        render(e, two, 20);
+        e->set_param(two, "panic", "1");
+        std::vector<int16_t> after;
+        render(e, two, 40);
+        render(e, two, 20, &after);
+        double tail = 0;
+        for (int16_t v : after) tail += fabs((double)v);
+        CHECK(tail == 0, "STOP silences both processors");
+        // an edit reaches the twin: Init Patch (a saw through filter 1) with the filter shut is as quiet on two as on one
+        for (void *x : {one, two}) e->set_param(x, "preset", std::to_string(find("Init Patch")).c_str());
+        for (int n : chord) note(e, two, 0x90, n, 100), note(e, one, 0x90, n, 100);
+        render(e, two, 100);
+        e->set_param(two, "fil1_freq", "0.0");
+        std::vector<int16_t> shut;
+        render(e, two, 100);
+        render(e, two, 40, &shut);
+        double rs = 0;
+        for (int16_t v : shut) rs += (double)v * v;
+        e->set_param(one, "fil1_freq", "0.0");
+        std::vector<int16_t> shut1;
+        render(e, one, 100);
+        render(e, one, 40, &shut1);
+        double rs1 = 0;
+        for (int16_t v : shut1) rs1 += (double)v * v;
+        for (int n : chord) note(e, two, 0x80, n, 0), note(e, one, 0x80, n, 0);
+        CHECK(rs1 > 0 && rs < rs1 * 1.3 + 1e8 && rs > rs1 * 0.7 - 1e8, "a filter edit reaches the twin's voices too (level %.0f, one processor %.0f)",
+              sqrt(rs / 10240), sqrt(rs1 / 10240));
+        // mono and the arpeggiator stay on one processor
+        e->set_param(two, "panic", "1");
+        render(e, two, 10);
+        e->set_param(two, "playmode", "0");   // Legato
+        for (int n : chord) note(e, two, 0x90, n, 100);
+        render(e, two, 20);
+        t = twin(two);
+        CHECK(t[1] == 0, "Legato: every note on this processor (twin %d)", t[1]);
+        for (int n : chord) note(e, two, 0x80, n, 0);
+        e->set_param(two, "playmode", "1");
+        e->set_param(two, "panic", "1");
+        render(e, two, 10);
+        // the project remembers CORES
+        std::string st = get(e, two, "state");
+        void *re = e->create(nullptr);
+        e->set_param(re, "state", st.c_str());
+        CHECK(st.find("cores=2") != std::string::npos && get(e, re, "cores") == "1" && twin(re)[1] == 0,
+              "CORES Two is saved with the project and comes back");
+        // a twin that is late: the block finishes anyway (the rest of it without the twin), and nothing hangs
+        e->set_param(re, "preset", std::to_string(pad).c_str());
+        e->set_param(re, "test_twin_delay_us", "8000");
+        for (int n : chord) note(e, re, 0x90, n, 100);
+        double t0 = now();
+        render(e, re, 10);
+        double ms = (now() - t0) * 1000 / 10;
+        e->set_param(re, "test_twin_delay_us", "0");
+        t = twin(re);
+        CHECK(t[2] > 0 && atol(get(e, re, "test_nonfinite").c_str()) == 0,
+              "a late twin: the block doesn't wait past its time (%d samples without it, %.1f ms per block)", t[2], ms);
+        // off again, on again, and destroyed while on
+        e->set_param(re, "cores", "0");
+        CHECK(twin(re)[1] == -1, "CORES One stops the second processor");
+        e->set_param(re, "cores", "1");
+        e->set_param(re, "eco", "4");   // and in Ultra
+        for (int n : chord) note(e, re, 0x90, n, 100);
+        std::vector<int16_t> u;
+        render(e, re, 200, &u);
+        double ru = 0;
+        for (int16_t v : u) ru += (double)v * v;
+        t = twin(re);
+        CHECK(ru > 0 && t[1] > 0 && atol(get(e, re, "test_nonfinite").c_str()) == 0, "TWO CORES in ECO Ultra plays (%d on the twin)", t[1]);
+        // speed: the heavy chord with one processor and with two (this machine has few cores; the MPC has four)
+        void *h1 = e->create(nullptr), *h2 = e->create(nullptr);
+        int heavy = find("Alien Chaos2 [psylion]");
+        for (void *x : {h1, h2}) {
+            e->set_param(x, "preset", std::to_string(heavy).c_str());
+            e->set_param(x, "eco", "1");
+            e->set_param(x, "budget_test_fixed", "1");
+        }
+        e->set_param(h2, "cores", "1");
+        double us[2];
+        int k = 0;
+        for (void *x : {h1, h2}) {
+            for (int n : {48, 52, 55, 59, 62, 64, 67, 71}) note(e, x, 0x90, n, 100);
+            render(e, x, 20);
+            double t1 = now();
+            render(e, x, 300);
+            us[k++] = (now() - t1) / 300 * 1e6;
+        }
+        printf("info Alien Chaos2, 8 notes, voice budget off: one processor %.0f us, two %.0f us per block (this machine)\n", us[0], us[1]);
+        for (void *x : {one, two, re, h1, h2}) e->destroy(x);
+    }
+
     // 3g. the USER bank (1.4.10)
     {
         void *x = e->create(nullptr);
@@ -500,7 +684,7 @@ int main(int argc, char **argv) {
         sx = get(e, x, "state");
         auto play = [&](void *y) {
             e->set_param(y, "preset", "0"); e->set_param(y, "state", sx.c_str());
-            std::vector<int16_t> o; srand(7); note(e, y, 0x90, 57, 110); render(e, y, 120, &o); note(e, y, 0x80, 57, 0); render(e, y, 60, &o);
+            std::vector<int16_t> o; odin_srand(7); note(e, y, 0x90, 57, 110); render(e, y, 120, &o); note(e, y, 0x80, 57, 0); render(e, y, 60, &o);
             return o;
         };
         void *y1 = e->create(nullptr);

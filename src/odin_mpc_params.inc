@@ -233,3 +233,4 @@
     {"bank_next", K_SPECIAL, "", 0, {}, 0, 0, ""},
     {"browse_bank", K_SPECIAL, "", 0, {}, 0, 0, ""},
     {"browse_patch", K_SPECIAL, "", 0, {}, 0, 0, ""},
+    {"cores", K_SPECIAL, "", 0, {}, 0, 0, ""},

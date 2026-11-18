@@ -14,6 +14,7 @@
 */
 
 #pragma once
+#include "../OdinRand.h" // odin2-mpc
 #include "../Filters/DCBlockingFilter.h"
 #include "../OdinConstants.h"
 #include "Oscillator.h"
@@ -34,7 +35,7 @@ public:
 	std::function<void(int)> selectWavetableByMapping = [](int) { jassert(false); };
 
 	virtual void randomizePhase() override {
-		m_read_index = (float)rand() / (float)RAND_MAX * WAVETABLE_LENGTH;
+		m_read_index = (float)odin_rand() / (float)RAND_MAX * WAVETABLE_LENGTH;
 	}
 
 	WavetableOsc1D();

@@ -14,6 +14,7 @@
 */
 
 #include "ChiptuneOscillator.h"
+#include "../OdinRand.h" // odin2-mpc
 #include <ctime>
 
 #define NOISE_SEGMENT_LENGTH 30
@@ -44,7 +45,7 @@ float ChiptuneOscillator::generateChipNoise() {
 	m_read_index += m_wavetable_inc;
 	if (m_read_index > NOISE_SEGMENT_LENGTH * 3) {
 		m_read_index       = 0.f;
-		m_last_noise_value = std::rand() % 16 - 8;
+		m_last_noise_value = odin_rand() % 16 - 8;
 		m_last_noise_value *= 0.125f;
 	}
 

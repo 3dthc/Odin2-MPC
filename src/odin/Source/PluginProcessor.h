@@ -17,6 +17,8 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "GlobalIncludes.h"
+#include <atomic> // odin2-mpc
+#include <chrono> // odin2-mpc
 #include "InitPatchData.h" // odin2-mpc
 #include "OdinTreeListener.h"
 #include "audio/FX/Chorus.h"
@@ -63,6 +65,19 @@ public:
 	// instead of every sample (and on every sample with MIDI); envelopes, LFOs, FM/PM, chiptune, the audio itself
 	// stay per sample. Patches that modulate from an oscillator or filter output always run per sample.
 	int m_ctrl_rate = 1;
+
+	// odin2-mpc (1.4.11, TWO CORES): a second processor on another thread plays half the notes. It runs with
+	// m_voices_only: after its voice loop it writes the voice sum of each sample to m_vo_out and counts it in
+	// m_vo_done, and stops there (no filter 3, effects or master). The main processor, given m_twin_out/m_twin_done,
+	// adds that sum after its own voice loop, waiting for the twin's sample if it isn't there yet, but never past
+	// m_twin_deadline (steady-clock ns): after that the rest of the block goes without the twin.
+	bool m_voices_only = false;
+	float *m_vo_out[2] = {nullptr, nullptr};
+	std::atomic<int> *m_vo_done = nullptr;
+	const float *m_twin_out[2] = {nullptr, nullptr};
+	std::atomic<int> *m_twin_done = nullptr;
+	int64_t m_twin_deadline = 0;
+	int m_twin_late = 0; // samples given up on (engine_test reads it)
 	int m_ctrl_count = 0;
 	bool m_voice_live[VOICES] = {}; // odin2-mpc: which voices sound, for the mod matrix (ModMatrixRow::m_live)
 	// voice protection: start a voice's amp envelope on a 15 ms release (it ends, and frees the voice, quickly)
