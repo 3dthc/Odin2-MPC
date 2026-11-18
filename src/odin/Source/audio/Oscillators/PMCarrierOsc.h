@@ -40,7 +40,7 @@ class PMCarrierOsc : public WavetableOsc1D {
     // hence const = SR
 
     double seed_freq = 27.5; //A0
-    float abs_freq = fabs(m_osc_freq_modded + m_phase_velocity * m_samplerate);
+    float abs_freq = fabs(m_osc_freq_modded + m_phase_velocity * m_samplerate) * tableFreqScale(); // odin2-mpc
     for(int table = 0; table < SUBTABLES_PER_WAVETABLE; table++){
         if(abs_freq < seed_freq){
             return table;

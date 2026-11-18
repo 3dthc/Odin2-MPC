@@ -21,6 +21,8 @@
  *         low for 1.5 s; notes already sounding are never changed (default)
  *   Eco   control rate every 16 samples, new notes start at most 3 unison voices
  *   Lite  as Eco with at most 2, and the per-voice distortion without its 3x oversampling
+ *   Ultra (1.4.11) as Lite, with the whole engine at half the sample rate (22.05 kHz) and a 2x upsampler after it:
+ *         about half the work again; nothing above about 10 kHz (wavetables are chosen for the lower Nyquist)
  *
  * GPL-3.0-or-later, as Odin 2. */
 #include "odin_state.h"
@@ -112,6 +114,46 @@ struct Banks {
             for (int p : patches[b])
                 if (p == preset) return b;
         return 0;
+    }
+};
+
+/* ECO Ultra's 2x upsampler: a 63-tap Kaiser-windowed (beta 7) halfband filter. Every other tap but the centre is
+ * zero, so the odd output samples are the input delayed and the even ones take 16 multiplies (the taps are
+ * symmetric). Flat to about 9.5 kHz, more than 70 dB down above 12.5 kHz, 0.35 ms of delay. */
+struct Upsampler2x {
+    static const int TAPS = 63, HALF = 32, PAIRS = 16;
+    float hist[2 * HALF] = {0};   // the last 32 inputs, written twice so a window is always contiguous
+    int pos = 0;
+    static const float *coefs() {   // h[2k] * 2 for k = 0..15 (the other half mirrors it)
+        static float c[PAIRS];
+        static bool done = false;
+        if (!done) {
+            auto i0 = [](double x) {   // the zeroth-order modified Bessel function, for the Kaiser window
+                double sum = 1, t = 1;
+                for (int k = 1; k < 30; k++) t *= (x / (2 * k)) * (x / (2 * k)), sum += t;
+                return sum;
+            };
+            const double beta = 7.0, mid = (TAPS - 1) / 2.0;
+            for (int k = 0; k < PAIRS; k++) {
+                double x = 2 * k - mid, r = x / mid;
+                double h = 0.5 * sin(M_PI * 0.5 * x) / (M_PI * 0.5 * x) * i0(beta * sqrt(1 - r * r)) / i0(beta);
+                c[k] = (float)(2.0 * h);   // x2: the gain zero-stuffing loses
+            }
+            done = true;
+        }
+        return c;
+    }
+    void reset() { for (float &h : hist) h = 0; pos = 0; }
+    /* one input sample in, two output samples out */
+    void push(float x, float &a, float &b) {
+        const float *c = coefs();
+        hist[pos] = hist[pos + HALF] = x;
+        const float *w = hist + pos + 1;   // w[0] = the oldest of the last 32 inputs, w[31] = x
+        float s = 0;
+        for (int k = 0; k < PAIRS; k++) s += c[k] * (w[31 - k] + w[k]);
+        a = s;
+        b = w[31 - 15];   // the centre tap: x delayed by 15
+        pos = pos + 1 < HALF ? pos + 1 : 0;
     }
 };
 
@@ -279,13 +321,22 @@ struct Instance {
 
     float left[128], right[128];
 
+    /* ECO Ultra: Odin renders at 22.05 kHz into these; Upsampler2x makes the 44.1 kHz block. A block with an odd frame
+     * count leaves one output frame over for the next. */
+    float halfL[65], halfR[65];
+    Upsampler2x upL, upR;
+    float carryL = 0, carryR = 0;
+    bool hasCarry = false;
+    bool halfRate = false;
+    long nonFinite = 0;   // samples that weren't numbers (engine_test reads "test_nonfinite")
+
     // CPU meter and ECO
     float cpuAvg = 0;      // percent of the block budget, averaged over ~0.1 s
     float cpuHeld = 0;     // cpuAvg, peak-held, falling slowly
     int cpuShown = 0;      // the value the page shows (5 % steps)
     long framesSinceShow = 0;
     unsigned displayRev = 0;
-    enum { ECO_OFF, ECO_AUTO, ECO_ECO, ECO_LITE };
+    enum { ECO_OFF, ECO_AUTO, ECO_ECO, ECO_LITE, ECO_ULTRA };
     int eco = ECO_AUTO;
     int autoCap = 12;      // ECO Auto: the unison cap the load asks for now (12 = none)
     long lowFrames = 0;    // ECO Auto: how long the load has been low
@@ -457,9 +508,10 @@ struct Instance {
 
     // ---- ECO
     void setEco(int e) {
-        if (e < ECO_OFF || e > ECO_LITE) return;
-        bool rate = (eco == ECO_OFF) != (e == ECO_OFF);
+        if (e < ECO_OFF || e > ECO_ULTRA) return;
+        bool rate = (eco == ECO_OFF) != (e == ECO_OFF) || (eco == ECO_ULTRA) != (e == ECO_ULTRA);
         eco = e;
+        setHalfRate(e == ECO_ULTRA);
         applyEco();
         if (rate) startBudget();   // audio rate <-> control rate: start from the patch's cost for the new one
     }
@@ -467,22 +519,34 @@ struct Instance {
     int ecoCap() const {
         switch (eco) {
         case ECO_ECO: return 3;
-        case ECO_LITE: return 2;
+        case ECO_LITE:
+        case ECO_ULTRA: return 2;
         case ECO_AUTO: return autoCap;   // 12, 3, 2 or 1 by load
         default: return 12;
         }
     }
 
-    bool ecoActive() const { return ecoCap() < 12 || eco == ECO_LITE; }
+    bool ecoActive() const { return ecoCap() < 12 || eco == ECO_LITE || eco == ECO_ULTRA; }
+
+    /* ECO Ultra in or out: Odin at the other sample rate, from silence (its delay lines and voices start over) */
+    void setHalfRate(bool on) {
+        if (on == halfRate) return;
+        halfRate = on;
+        odin.panic();
+        odin.prepare(on ? 22050.f : 44100.f);
+        odin.resetAudioEngine();
+        upL.reset(), upR.reset();
+        hasCarry = false;
+    }
 
     void applyEco() {
         bool was = ecoLight;
         applyUnisonCap();
-        odin.m_ctrl_rate = eco == ECO_OFF ? 1 : eco == ECO_AUTO ? CTRL_RATE_AUTO : CTRL_RATE_ECO;
+        odin.m_ctrl_rate = eco == ECO_OFF ? 1 : eco == ECO_AUTO ? CTRL_RATE_AUTO : eco == ECO_ULTRA ? CTRL_RATE_ECO / 2 : CTRL_RATE_ECO;
         odin.m_unison_fit = eco != ECO_OFF;
         odin.m_voice_manager.m_steal_from_stacks = eco != ECO_OFF;
-        if ((eco == ECO_LITE) != distLite) {
-            distLite = eco == ECO_LITE;
+        if ((eco == ECO_LITE || eco == ECO_ULTRA) != distLite) {
+            distLite = eco == ECO_LITE || eco == ECO_ULTRA;
             odin.setDistortionLite(distLite);
         }
         ecoLight = ecoActive();
@@ -550,8 +614,9 @@ struct Instance {
     /* after a patch loads: start from its measured costs */
     void startBudget() {
         const BankCost &c = preset < NBANK ? BANK_COST[preset] : userCost();
-        hintCost = voiceCost = (eco == ECO_OFF ? c.voiceOff : c.voiceCtrl) / 10.f;
-        baseCost = c.base / 10.f;
+        float k = eco == ECO_ULTRA ? 0.55f : 1.f;   // half the samples, plus the upsampler
+        hintCost = voiceCost = k * (eco == ECO_OFF ? c.voiceOff : c.voiceCtrl) / 10.f;
+        baseCost = k * c.base / 10.f;
         raiseFrames = 0;
         int v = budgetVoices();
 #ifdef ODIN_MPC_NO_BUDGET
@@ -824,16 +889,39 @@ struct Instance {
     // ---- audio
     void render(int16_t *out, int frames) {
         double t0 = nowSeconds();
-        odin.processStereo(left, right, frames, midi, midiFrame, nmidi);
+        if (halfRate) renderHalf(frames);
+        else odin.processStereo(left, right, frames, midi, midiFrame, nmidi);
         nmidi = 0;
         double spent = nowSeconds() - t0;
         for (int i = 0; i < frames; i++) {
+            if (!std::isfinite(left[i]) || !std::isfinite(right[i])) ++nonFinite;   // engine_test: none, in any mode
             out[2 * i] = toS16(left[i]);
             out[2 * i + 1] = toS16(right[i]);
         }
         float pct = (float)(spent / (frames * BLOCK_SECONDS_PER_FRAME) * 100.0) + testLoad;
         meter(pct, frames);
         budget(testFixed ? testLoad : pct, frames);
+    }
+
+    /* ECO Ultra: render ceil(frames / 2) frames at 22.05 kHz, then two output frames from each (one left over when
+     * the count is odd, played first next block); MIDI lands on the half-rate frame of its offset */
+    void renderHalf(int frames) {
+        int o = 0;
+        if (hasCarry && frames > 0) left[0] = carryL, right[0] = carryR, o = 1, hasCarry = false;
+        int need = frames - o, n = (need + 1) / 2;
+        for (int i = 0; i < nmidi; i++) {
+            int f = (midiFrame[i] - o) / 2;
+            midiFrame[i] = f < 0 ? 0 : f >= n ? (n > 0 ? n - 1 : 0) : f;
+        }
+        if (n > 0) odin.processStereo(halfL, halfR, n, midi, midiFrame, nmidi);
+        for (int i = 0; i < n; i++) {
+            float a, b, c, d;
+            upL.push(halfL[i], a, b);
+            upR.push(halfR[i], c, d);
+            left[o] = a, right[o] = c, o++;
+            if (o < frames) left[o] = b, right[o] = d, o++;
+            else carryL = b, carryR = d, hasCarry = true;
+        }
     }
 
     /* The load averaged over ~0.1 s (so one slow block, e.g. 24 voices starting together, doesn't read as an
@@ -912,6 +1000,7 @@ int get_param(void *inst, const char *key, char *buf, int len) {
         if (n >= 0 && n < NBANK) return snprintf(buf, len, "%s", BANK[n].category);
         return n >= NBANK && n < NBANK + NUSER ? snprintf(buf, len, "USER") : 0;
     }
+    if (!strcmp(key, "test_nonfinite")) return snprintf(buf, len, "%ld", s->nonFinite);
     if (!strcmp(key, "browse_bank_display")) return snprintf(buf, len, "%s", s->banks().name[s->browseBank]);
     if (!strcmp(key, "browse_patch_display")) {
         int at = s->browseIndex();

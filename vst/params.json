@@ -13,7 +13,7 @@
    "key": "preset",
    "name": "Preset",
    "min": 0,
-   "max": 290,
+   "max": 260,
    "display": "int",
    "nudge_pct": 10,
    "refresh_display": true
@@ -1544,7 +1544,8 @@
     "Off",
     "Auto",
     "Eco",
-    "Lite"
+    "Lite",
+    "Ultra"
    ],
    "default": 1
   },
@@ -1947,7 +1948,7 @@
    "key": "browse_bank",
    "name": "BANK",
    "min": 0,
-   "max": 15,
+   "max": 14,
    "display": "int",
    "qlink_ticks": 5,
    "dynamic_display": true,

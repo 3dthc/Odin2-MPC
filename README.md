@@ -97,9 +97,10 @@ looks after this itself; there is no voices knob to turn.
   | **Auto** (default) | modulation, oscillator pitch and filter cutoff worked out every 8 samples instead of every sample (5.5 kHz, about a quarter less work, as good as inaudible); envelopes, LFOs, FM/PM and the audio itself stay per sample. If Odin's load still climbs past the voice budget (about 85 %), new notes also start with at most 3 unison voices (2 above about 95 %, 1 if Odin runs out of time altogether), back to the full patch after 1.5 s of low load. Notes already playing are never changed |
   | **Eco** | modulation every 16 samples (about a third less work) and at most 3 unison voices per note: very close to the original, about half the CPU on the heaviest patches |
   | **Lite** | as Eco, at most 2 unison voices, and the per-voice distortion without oversampling: slightly harsher distortion on high notes |
+  | **Ultra** | as Lite, with the whole engine at half the sample rate (22.05 kHz) and a clean 2x upsampler after it: about 40 % less work than Lite on the heaviest patches. Nothing above about 10 kHz, so bright patches and hi-hats sound a little darker; switching in or out of Ultra starts the sound over (held notes and effect tails stop) |
 
   A patch that modulates from an oscillator or filter output (audio-rate modulation in the mod matrix) always runs
-  per sample. The light next to ECO is on while ECO is cutting unison or the distortion's oversampling. ECO is saved
+  per sample. The light next to ECO is on while ECO is cutting unison or the distortion's oversampling, and always in Ultra. ECO is saved
   with the project and stays as you set it when you change patches.
 - **STOP** silences everything at once: every voice, held notes, the arpeggiator, and the delay and reverb tails.
 

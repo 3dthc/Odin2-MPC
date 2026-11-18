@@ -165,7 +165,98 @@ int main(int argc, char **argv) {
         double rms2 = 0;
         for (int16_t v : b2) rms2 += (double)v * v;
         CHECK(b0 != b2 && rms2 > 0, "ECO Eco plays Alien Chaos2 lighter and still plays it");
-        printf("info Alien Chaos2, 4 notes: Off %.0f us, Eco %.0f us, Lite %.0f us per block (this machine)\n", h0, h2, h3);
+        std::vector<int16_t> b4;
+        double h4;
+        take(heavy, "4", b4, h4);
+        printf("info Alien Chaos2, 4 notes: Off %.0f us, Eco %.0f us, Lite %.0f us, Ultra %.0f us per block (this machine)\n",
+               h0, h2, h3, h4);
+        // 1.4.11 ECO Ultra: half the sample rate. Plays at Lite's level, at well under Lite's cost, nothing above Nyquist
+        {
+            double r3 = 0, r4 = 0;
+            for (int16_t v : b3) r3 += (double)v * v;
+            for (int16_t v : b4) r4 += (double)v * v;
+            double ratio = sqrt(r4 / (r3 + 1e-9));
+            CHECK(ratio > 0.6 && ratio < 1.5, "ECO Ultra plays Alien Chaos2 at about Lite's level (%.2f)", ratio);
+            CHECK(h4 < h3 * 0.85, "ECO Ultra costs clearly less than Lite (wall clock here; about 40 %% fewer instructions) (%.0f vs %.0f us)", h4, h3);
+            // a bright patch held high: the energy above 11.5 kHz (what half rate can't make, so only filter leakage
+            // or aliasing could put there) next to the energy below
+            auto band = [](const std::vector<int16_t> &v, double lo, double hi) {
+                const int N = 4096;
+                size_t start = v.size() / 2 > (size_t)N * 2 ? v.size() / 2 - N * 2 : 0;
+                double sum = 0;
+                for (int bin = (int)(lo / 44100 * N); bin < (int)(hi / 44100 * N); bin++) {
+                    double re = 0, im = 0;
+                    for (int n = 0; n < N; n++) {
+                        double w = 0.5 - 0.5 * cos(2 * M_PI * n / (N - 1)), x = v[start + 2 * n] * w;
+                        re += x * cos(2 * M_PI * bin * n / N), im -= x * sin(2 * M_PI * bin * n / N);
+                    }
+                    sum += re * re + im * im;
+                }
+                return sum;
+            };
+            void *u = e->create(nullptr);
+            e->set_param(u, "preset", std::to_string(find("Init Patch")).c_str());
+            e->set_param(u, "eco", "4");
+            note(e, u, 0x90, 96, 110);   // C7, a saw: harmonics far past Nyquist
+            std::vector<int16_t> hi;
+            render(e, u, 300, &hi);
+            double low = band(hi, 1000, 9500), up = band(hi, 11500, 21000);
+            CHECK(low > 0 && up < low * 1e-4, "ECO Ultra: a high saw stays below 11 kHz, no aliasing above (%.1f dB)",
+                  10 * log10(up / low + 1e-30));
+            // odd block sizes: frames carry over, the sound stays continuous
+            void *v1 = e->create(nullptr), *v2 = e->create(nullptr);
+            for (void *v : {v1, v2}) {
+                e->set_param(v, "preset", std::to_string(heavy).c_str());
+                e->set_param(v, "eco", "4");
+                srand(3);
+                note(e, v, 0x90, 60, 100);
+            }
+            std::vector<int16_t> s1, s2;
+            int16_t buf[256];
+            for (int k = 0; k < 120; k++) { e->render(v1, buf, 128); s1.insert(s1.end(), buf, buf + 256); }
+            int sizes[] = {37, 91, 1, 128, 3, 64};
+            while (s2.size() < s1.size()) {
+                int n = sizes[(s2.size() / 2) % 6];
+                if ((int)(s1.size() - s2.size()) / 2 < n) n = (int)(s1.size() - s2.size()) / 2;
+                e->render(v2, buf, n);
+                s2.insert(s2.end(), buf, buf + 2 * n);
+            }
+            double diff = 0, tot = 0;
+            for (size_t i = 0; i < s1.size(); i++) diff += fabs((double)s1[i] - s2[i]), tot += fabs((double)s1[i]);
+            CHECK(tot > 0 && s2.size() == s1.size(), "ECO Ultra renders odd block sizes (%.3f of the level differs)", diff / (tot + 1));
+            // out of Ultra: back at full rate, same sound as never having been in it
+            std::vector<int16_t> f1, f2;
+            void *w1 = e->create(nullptr), *w2 = e->create(nullptr);
+            e->set_param(w2, "eco", "4");
+            e->set_param(w2, "eco", "3");
+            for (void *w : {w1, w2}) { e->set_param(w, "preset", std::to_string(light).c_str()); e->set_param(w, "eco", "3"); }
+            note(e, w1, 0x90, 60, 100), note(e, w2, 0x90, 60, 100);
+            render(e, w1, 50, &f1), render(e, w2, 50, &f2);
+            CHECK(f1 == f2, "out of ECO Ultra, the engine is back at 44.1 kHz exactly");
+            for (void *z : {u, v1, v2, w1, w2}) e->destroy(z);
+            // every factory patch in Ultra: a held chord and its release stay numbers, and stay sounding
+            void *z = e->create(nullptr);
+            e->set_param(z, "eco", "4");
+            std::string blown, quiet;
+            for (int i = 0; i < 261; i++) {
+                e->set_param(z, "preset", std::to_string(i).c_str());
+                long before = atol(get(e, z, "test_nonfinite").c_str());
+                for (int n : {48, 60, 67, 76, 84}) note(e, z, 0x90, n, 100);
+                std::vector<int16_t> o;
+                render(e, z, 120, &o);
+                double late = 0;
+                for (size_t k = o.size() / 2; k < o.size(); k++) late += fabs((double)o[k]);
+                for (int n : {48, 60, 67, 76, 84}) note(e, z, 0x80, n, 0);
+                render(e, z, 60);
+                e->set_param(z, "panic", "1");
+                render(e, z, 4);
+                if (atol(get(e, z, "test_nonfinite").c_str()) != before) blown += " " + std::to_string(i);
+                if (late == 0) quiet += " " + std::to_string(i);
+            }
+            CHECK(blown.empty(), "ECO Ultra: every factory patch stays finite (blew up:%s)", blown.c_str());
+            if (!quiet.empty()) printf("info ECO Ultra: silent after half a second (patch may be a one-shot):%s\n", quiet.c_str());
+            e->destroy(z);
+        }
         void *x = e->create(nullptr);
         CHECK(get(e, x, "eco") == "1", "ECO starts in Auto");
         e->set_param(x, "eco", "3");

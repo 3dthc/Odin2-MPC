@@ -59,6 +59,9 @@ public:
 
 		if (m_freq_modded > FILTER_FC_MAX)
 			m_freq_modded = FILTER_FC_MAX;
+		// odin2-mpc: below 44.1 kHz (ECO Ultra) also under the sample rate's Nyquist, where these filters stay stable
+		if (m_samplerate > 0 && m_samplerate < 44000. && m_freq_modded > 0.45 * m_samplerate)
+			m_freq_modded = 0.45 * m_samplerate;
 		if (m_freq_modded < FILTER_FC_MIN)
 			m_freq_modded = FILTER_FC_MIN;
 	}

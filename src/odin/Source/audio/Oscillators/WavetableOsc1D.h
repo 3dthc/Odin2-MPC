@@ -24,6 +24,10 @@
 
 class WavetableOsc1D : public Oscillator {
 public:
+	// odin2-mpc: the band-limited tables hold harmonics up to 22 kHz (built for 44.1 kHz); below that rate (ECO Ultra
+	// runs the engine at 22.05 kHz) a table is chosen as if the note were that much higher, so none passes Nyquist
+	inline float tableFreqScale() const { return m_samplerate > 0 && m_samplerate < 44000. ? (float)(44100. / m_samplerate) : 1.f; }
+
 	// this shall map wavetables properly.
 	// Input: wavetable index from valueTree (propably from dropdown menu)
 	// Ouptut: wavetable index as it was set in loadWavetables()

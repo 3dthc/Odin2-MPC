@@ -55,14 +55,15 @@ void WavetableOsc1D::update() {
 int WavetableOsc1D::getTableIndex() {
 
 	//compare to mid freq of last used interval
-	if (m_one_over_last_mid_freq * m_osc_freq_modded < ROOT_OF_MINOR_THIRD &&
-	    m_one_over_last_mid_freq * m_osc_freq_modded > ONE_OVER_ROOT_OF_MINOR_THIRD) {
+	const float freq = m_osc_freq_modded * tableFreqScale(); // odin2-mpc
+	if (m_one_over_last_mid_freq * freq < ROOT_OF_MINOR_THIRD &&
+	    m_one_over_last_mid_freq * freq > ONE_OVER_ROOT_OF_MINOR_THIRD) {
 		//still is in range of last used note
 		return m_last_table_index;
 	}
 
 	float seed_freq = 27.5; // A0
-	float abs_freq  = fabs(m_osc_freq_modded);
+	float abs_freq  = fabs(freq);
 	for (int table = 0; table < SUBTABLES_PER_WAVETABLE; ++table) {
 		if (abs_freq < seed_freq) {
 			//we save the inverse midfreq of last found interval to use a few lines up

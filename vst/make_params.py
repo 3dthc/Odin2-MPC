@@ -214,7 +214,7 @@ tint("bend", "Bend Range", "misc", "pitchbend_amount", 0, 24)
 tog("arp_on", "Arpeggiator", "arp_on")
 
 # ---- added in 1.1 (appended: projects store values by position)
-special("eco", "ECO", options=["Off", "Auto", "Eco", "Lite"])
+special("eco", "ECO", options=["Off", "Auto", "Eco", "Lite", "Ultra"])
 special("eco_active", "ECO Active", options=["Off", "On"])
 
 # ---- added in 1.2: one knob per oscillator for its type's main control (PW, position, FM amount, ...), so a Q-Link

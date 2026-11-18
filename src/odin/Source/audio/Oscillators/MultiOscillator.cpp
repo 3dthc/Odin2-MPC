@@ -83,6 +83,7 @@ void MultiOscillator::reset() {
 }
 
 int MultiOscillator::getTableIndex(float p_freq) {
+	p_freq *= tableFreqScale(); // odin2-mpc
 	//compare to mid freq of last used interval
 	if (m_one_over_last_mid_freq * p_freq < ROOT_OF_MINOR_THIRD &&
 	    m_one_over_last_mid_freq * p_freq > ONE_OVER_ROOT_OF_MINOR_THIRD) {
