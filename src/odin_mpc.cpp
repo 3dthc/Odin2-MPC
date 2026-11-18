@@ -36,7 +36,9 @@
 extern "C" {
 #include "engine.h"
 }
-#include "fast_cores.h"
+#ifndef MPC_DESKTOP
+#include "fast_cores.h"   // Linux only; the twin runs on the MPC only (a desktop has the CPU to spare)
+#endif
 
 #include <cmath>
 #include <ctime>
@@ -462,7 +464,9 @@ struct Instance {
         odin.prepare(44100.f);
         loadPreset(0);
         applyEco();
-        setTwin(true);   // TWO CORES, always
+#ifndef MPC_DESKTOP
+        setTwin(true);   // TWO CORES, always on the MPC (a desktop build keeps the same 128-frame delay without it)
+#endif
     }
 
     ~Instance() {
@@ -519,7 +523,11 @@ struct Instance {
     /* the twin's thread: one job per twinGo; real-time, below MPC's audio threads */
     void twinLoop() {
         sched_param sp;
+#ifndef MPC_DESKTOP
         sp.sched_priority = fastcores::rt_priority(10);
+#else
+        sp.sched_priority = 10;
+#endif
         pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp);   // refused without the right: then it runs as it is
         odin_srand(0x0d1e2);
         for (;;) {
@@ -615,12 +623,12 @@ struct Instance {
     /* Odin's block through the twin's pipeline (always twinLag() behind, so the latency never changes); the twin gets
      * notes only in poly without the arp, but runs every block so its LFOs and envelopes stay with this one's */
     void process(float *l, float *r, int n) {
-        if (!twin || n <= 0) {
+        if (n <= 0) {
             odin.m_twin_done = nullptr;
             odin.processStereo(l, r, n, midi, midiFrame, nmidi);
             return;
         }
-        if (!twinPlays() && twinRan) {   // mono, legato or the arp from now on: its notes stop
+        if (twin && !twinPlays() && twinRan) {   // mono, legato or the arp from now on: its notes stop
             pendPanic = true;
             for (auto &c : noteOwner)
                 for (auto &k : c) k = 0;
@@ -637,12 +645,12 @@ struct Instance {
     /* one piece of m frames, starting `from` frames into the host block (whose MIDI is midi[]/midiFrame[]) */
     void twinPiece(float *l, float *r, int m, int from) {
         unsigned head = jobHead.load(std::memory_order_relaxed);
-        bool room = head - jobTail.load(std::memory_order_acquire) < (unsigned)JOBS;
+        bool room = twin && head - jobTail.load(std::memory_order_acquire) < (unsigned)JOBS;   // no twin: no jobs
         bool give = room && twinPlays() && twinRestFrames <= 0;
         Job *j = room ? &jobs[head % JOBS] : nullptr;
         if (j) j->nmidi = 0;
         // the twin's notes in its job; this processor's (and what both take) into the lag queue
-        if (twinIsIdle()) twinVoicesKnown = liveVoices(*twin);
+        if (twin && twinIsIdle()) twinVoicesKnown = liveVoices(*twin);
         int load[2] = {liveVoices(odin), twinVoicesKnown};
         for (int i = 0; i < nmidi; i++) {
             if (midiFrame[i] < from || midiFrame[i] >= from + m) continue;
@@ -715,7 +723,7 @@ struct Instance {
             mixL[i] = ok ? ringL[t & 1023] : 0.f;
             mixR[i] = ok ? ringR[t & 1023] : 0.f;
         }
-        if (late) {
+        if (late && twin) {
             ++twinLateBlocks;
             twinRestFrames = 2 * 44100;   // no new notes for it for 2 s
         }
