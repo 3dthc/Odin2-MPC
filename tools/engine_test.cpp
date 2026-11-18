@@ -332,6 +332,9 @@ int main(int argc, char **argv) {
         void *x = e->create(nullptr);
         e->set_param(x, "budget_test_fixed", "1");   // the budget sees only the test's load, not this machine's
         e->set_param(x, "preset", std::to_string(find("Init Patch")).c_str());
+        CHECK(atoi(get(e, x, "voices").c_str()) == 16, "with two processors a light patch still gets 16 voices in all (%s)",
+              get(e, x, "voices").c_str());
+        e->set_param(x, "test_one_core", "1");   // the budget's own rules, on one processor
         int light = atoi(get(e, x, "voices").c_str());
         e->set_param(x, "preset", std::to_string(find("Antarctica [RS]")).c_str());
         int heavy = atoi(get(e, x, "voices").c_str());
@@ -490,14 +493,13 @@ int main(int argc, char **argv) {
         };
         int pad = find("Electric Piano [tx]");
         void *one = e->create(nullptr), *two = e->create(nullptr);
-        CHECK(get(e, two, "cores") == "0" && twin(two)[1] == -1, "CORES starts at One, no second processor");
+        e->set_param(one, "test_one_core", "1");   // the reference: everything on one processor
+        CHECK(twin(two)[1] == 0, "every Odin starts with its second processor");
         for (void *x : {one, two}) {
             e->set_param(x, "preset", std::to_string(pad).c_str());
             e->set_param(x, "eco", "0");
             e->set_param(x, "budget_test_fixed", "1");   // the voice budget out of the way: every note sounds on both
         }
-        e->set_param(two, "cores", "1");
-        CHECK(get(e, two, "cores") == "1" && twin(two)[1] == 0, "CORES Two starts the second processor");
         const int chord[] = {48, 52, 55, 59, 62, 67};
         std::vector<int16_t> o1, o2;
         for (void *x : {one, two}) {
@@ -526,7 +528,7 @@ int main(int argc, char **argv) {
                 double c = num / sqrt(d1 * d2 + 1);
                 if (c > best) best = c, bestLag = lag / 2;
             }
-            CHECK(bestLag == 128 && best > 0.9, "the same chord, %d frames later (correlation %.3f)", bestLag, best);
+            CHECK(bestLag == 0 && best > 0.9, "the same chord at the same time as one processor (lag %d, correlation %.3f)", bestLag, best);
         }
         // its notes end where they started
         for (int n : chord) note(e, two, 0x80, n, 0);
@@ -574,27 +576,26 @@ int main(int argc, char **argv) {
         e->set_param(two, "playmode", "1");
         e->set_param(two, "panic", "1");
         render(e, two, 10);
-        // the project remembers CORES
-        std::string st = get(e, two, "state");
+        // a project from a 1.4.11 test build (it saved "cores=2") opens as any other
+        std::string st = get(e, two, "state") + "cores=2\n";
         void *re = e->create(nullptr);
         e->set_param(re, "state", st.c_str());
-        CHECK(st.find("cores=2") != std::string::npos && get(e, re, "cores") == "1" && twin(re)[1] == 0,
-              "CORES Two is saved with the project and comes back");
+        CHECK(twin(re)[1] == 0 && get(e, re, "state").find("cores") == std::string::npos, "an older project with cores=2 opens");
         // a twin that is late: the block finishes anyway (the rest of it without the twin), and nothing hangs
         e->set_param(re, "preset", std::to_string(pad).c_str());
+        e->set_param(re, "test_twin_wait", "0");   // as on the device: never wait
         e->set_param(re, "test_twin_delay_us", "8000");
         for (int n : chord) note(e, re, 0x90, n, 100);
         double t0 = now();
         render(e, re, 10);
         double ms = (now() - t0) * 1000 / 10;
         e->set_param(re, "test_twin_delay_us", "0");
+        e->set_param(re, "test_twin_wait", "1");
         t = twin(re);
-        CHECK(t[2] > 0 && atol(get(e, re, "test_nonfinite").c_str()) == 0,
-              "a late twin: the block doesn't wait past its time (%d samples without it, %.1f ms per block)", t[2], ms);
-        // off again, on again, and destroyed while on
-        e->set_param(re, "cores", "0");
-        CHECK(twin(re)[1] == -1, "CORES One stops the second processor");
-        e->set_param(re, "cores", "1");
+        CHECK(t[2] > 0 && ms < 4.0 && atol(get(e, re, "test_nonfinite").c_str()) == 0,
+              "a late twin: the audio thread doesn't wait for it (%d pieces without it, %.2f ms per block)", t[2], ms);
+        render(e, re, 800);   // its 2 s without new notes pass
+        e->set_param(re, "panic", "1");
         e->set_param(re, "eco", "4");   // and in Ultra
         for (int n : chord) note(e, re, 0x90, n, 100);
         std::vector<int16_t> u;
@@ -611,7 +612,7 @@ int main(int argc, char **argv) {
             e->set_param(x, "eco", "1");
             e->set_param(x, "budget_test_fixed", "1");
         }
-        e->set_param(h2, "cores", "1");
+        e->set_param(h1, "test_one_core", "1");
         double us[2];
         int k = 0;
         for (void *x : {h1, h2}) {

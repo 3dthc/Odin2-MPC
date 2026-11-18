@@ -21,11 +21,12 @@
  *         low for 1.5 s; notes already sounding are never changed (default)
  *   Eco   control rate every 16 samples, new notes start at most 3 unison voices
  *   Lite  as Eco with at most 2, and the per-voice distortion without its 3x oversampling
- * TWO CORES (1.4.11, off by default): a second Odin on its own thread plays half the notes (the less busy one gets each
- * new note), voices only. It runs a step ahead: while this processor plays a block, the twin makes the next one, and
- * this processor adds the twin's finished voices before filter 3 and the effects (which run once). So the cores never
- * wait on each other, for 128 frames (2.9 ms) more latency while TWO CORES is on. Mono, legato and the arpeggiator stay
- * on one processor. Each processor gets the voice budget.
+ * TWO CORES (1.4.11, always): a second Odin on its own thread plays half the notes (the less busy one gets each new
+ * note), voices only. It runs a step ahead: while this processor plays a block, the twin makes the next one, and this
+ * processor adds the twin's finished voices before filter 3 and the effects (which run once). The audio thread never
+ * waits for it (Akai's SDK: never block in process): a piece the twin hasn't finished goes without it, and a twin that
+ * keeps running late gets no new notes for 2 s. Latency: 128 frames (2.9 ms), always, reported to the host
+ * (ENGINE_LATENCY). Mono, legato and the arpeggiator stay on this processor. Each processor gets the voice budget.
  *   Ultra (1.4.11) as Lite, with the whole engine at half the sample rate (22.05 kHz) and a 2x upsampler after it:
  *         about half the work again; nothing above about 10 kHz (wavetables are chosen for the lower Nyquist)
  *
@@ -48,6 +49,7 @@ extern "C" {
 #include <dirent.h>
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <pthread.h>
 #include <semaphore.h>
 #include <thread>
@@ -307,7 +309,18 @@ int16_t toS16(float f) {
     return (int16_t)lrintf(f);
 }
 
+/* An Odin whose memory starts at zero (see Instance's operator new) */
+struct ZeroedOdin : OdinAudioProcessor {
+    static void *operator new(size_t n) { return calloc(1, n); }
+    static void operator delete(void *p) { free(p); }
+};
+
 struct Instance {
+    /* 1.4.11: from zeroed memory. Odin has members it never sets (the Korg filter's m_k_modded was one: in ECO Auto,
+     * Eco and Lite it filtered with it before the first update and stayed invalid); fresh memory isn't zero, and the
+     * larger instance with TWO CORES made that show. Zero is what they had by luck before. */
+    static void *operator new(size_t n, const std::nothrow_t &) noexcept { return calloc(1, n); }
+    static void operator delete(void *p) { free(p); }
     OdinAudioProcessor odin;
     std::unordered_map<std::string, int> index;   // control key -> CONTROLS index
     int preset = 0;
@@ -342,32 +355,55 @@ struct Instance {
     long nonFinite = 0;   // samples that weren't numbers (engine_test reads "test_nonfinite")
 
     // TWO CORES (1.4.11)
-    std::unique_ptr<OdinAudioProcessor> twin;   // the second processor while CORES is Two
+    std::unique_ptr<ZeroedOdin> twin;   // the second processor (always, from create); its exact type: Odin has no virtual destructor
     std::thread twinThread;
-    sem_t twinGo, twinDone;
+    sem_t twinGo;
     std::atomic<bool> twinQuit{false};
-    std::atomic<int> twinProgress{0};
-    float twinL[128], twinR[128];       // the twin's block (voices only)
-    float ringL[1024], ringR[1024];     // the twin's voices by absolute frame, ahead of this processor by twinLag()
-    float mixL[128], mixR[128];         // the part of them this processor's block adds
-    long nowFrame = 0;                  // frames given to the twin so far (this processor is twinLag() behind)
-    bool twinBusy = false;              // a block the twin hasn't finished (it ran past its time)
-    long twinPendingAt = 0;             // where that block goes in the ring
+    std::atomic<int> twinProgress{0};   // its voices-only hook counts samples (not read: the queue says what's done)
+    float twinL[128] = {0}, twinR[128] = {0};   // its block (voices only), on its thread
+    float ringL[1024] = {0}, ringR[1024] = {0};   // its voices by absolute frame; this processor plays twinLag() behind
+    float mixL[128] = {0}, mixR[128] = {0};     // the part of them this processor's piece adds
+    long nowFrame = 0;                  // frames handed to the twin so far
+    long restartAt = 0;                 // frames before this belong to a sound that was stopped
+    std::atomic<long> twinDoneTo{0};    // the twin has written the ring up to here (release/acquire)
+    /* its jobs, in order: a stretch of frames with its MIDI and everything it must apply first; the audio thread
+     * fills one and moves on, the twin's thread works through them */
+    struct TwinParam { RangedAudioParameter *p; float v; };
+    struct Job {
+        long at; int frames;
+        uint8_t midi[MAX_MIDI][3]; int midiFrame[MAX_MIDI]; int nmidi;
+        TwinParam params[64]; int nparams;
+        bool panic, reset;
+        int ctrlRate, unisonCap, voiceLimit; bool unisonFit, steal; float masterTune, bpm; bool distLite; float sr;
+    };
+    static const int JOBS = 8;
+    Job jobs[JOBS];
+    std::atomic<unsigned> jobHead{0}, jobTail{0};   // posted, done
     struct Queued { long at; uint8_t m[3]; };
     Queued queued[512];                 // this processor's MIDI, waiting out the lag
     int nqueued = 0;
     uint8_t mainMidi[MAX_MIDI][3];
     int mainMidiFrame[MAX_MIDI];
     std::atomic<int> twinAll{1 << 30};  // tells Odin's hook the twin's samples are all there
-    uint8_t twinMidi[MAX_MIDI][3];
-    int twinMidiFrame[MAX_MIDI];
-    int twinNmidi = 0, twinFrames = 0;
-    int8_t noteOwner[16][128];   // which processor plays a note: 0 this one, 1 the twin
-    bool twinRan = false;        // the twin played its part of the last block (it plays only in poly without the arp)
-    float twinSR = 44100.f;
-    std::atomic<int> twinTestDelayUs{0};   // engine_test: the twin starts its block this late
+    int8_t noteOwner[16][128];          // which processor plays a note: 0 this one, 1 the twin
+    bool twinRan = false;               // the twin played notes in the last piece (poly without the arp)
+    std::atomic<int> twinTestDelayUs{0};   // engine_test: the twin starts each job this late
+    bool twinTestWait = false;          // engine_test: wait for the twin (repeatable results faster than real time)
+    double testWaited = 0;              // time spent in that wait this block
+    int twinLateBlocks = 0;             // pieces with frames the twin hadn't finished (engine_test)
+    long twinRestFrames = 0;            // a twin that ran late gets no new notes until this many frames have passed
+    bool forceOneCore = false;          // engine_test: compare with one processor
+    // for the next job (knob values, STOP), or for when its queue is empty (anything structural)
+    TwinParam pendParams[64];
+    int npendParams = 0;
+    bool pendPanic = false, pendReset = false;
+    /* a whole patch for the twin (a load, or anything but a plain knob): this side snapshots it, the twin's thread
+     * compares and applies it before its next job, so the drawn tables are rebuilt there, never on the audio thread */
+    std::mutex syncMx;
+    OdinMPC::Lines syncShared;
+    std::atomic<bool> syncPending{false};
+    float twinSR = 44100.f;             // the rate the twin was last set to, on its thread
     bool twinDistLite = false;
-    int twinLateBlocks = 0;   // pieces the twin hadn't finished in time (engine_test)
 
     // CPU meter and ECO
     float cpuAvg = 0;      // percent of the block budget, averaged over ~0.1 s
@@ -420,24 +456,34 @@ struct Instance {
 
     Instance() : user(scanUser()), bk((int)user.size()) {
         for (int i = 0; i < NCONTROLS; i++) index[CONTROLS[i].key] = i;
-        sem_init(&twinGo, 0, 0), sem_init(&twinDone, 0, 0);
+        sem_init(&twinGo, 0, 0);
+        twinTestWait = getenv("ODIN2MPC_TWIN_WAIT") != nullptr;   // tools/engine_test.sh: repeatable, faster than real time
         memset(noteOwner, 0, sizeof noteOwner);
         odin.prepare(44100.f);
         loadPreset(0);
         applyEco();
+        setTwin(true);   // TWO CORES, always
     }
 
     ~Instance() {
         setTwin(false);
-        sem_destroy(&twinGo), sem_destroy(&twinDone);
+        sem_destroy(&twinGo);
     }
 
     // ---- TWO CORES
     bool twinOn() const { return (bool)twin; }
 
-    /* the twin plays its share only in poly mode without the arpeggiator (their notes depend on each other) */
+    /* the twin plays notes only in poly mode without the arpeggiator (their notes depend on each other) */
     bool twinPlays() const {
-        return twin && odin.m_mono_poly_legato == PlayModes::Poly && !odin.m_arpeggiator_on;
+        return twin && !forceOneCore && odin.m_mono_poly_legato == PlayModes::Poly && !odin.m_arpeggiator_on;
+    }
+
+    /* no job queued or running: the twin can be changed from here */
+    bool twinIsIdle() const { return jobTail.load(std::memory_order_acquire) == jobHead.load(std::memory_order_relaxed); }
+
+    /* wait until its queue is empty (not on the audio path: create/destroy and engine_test) */
+    void twinIdle() {
+        while (twin && !twinIsIdle()) std::this_thread::sleep_for(std::chrono::microseconds(50));
     }
 
     void setTwin(bool on) {
@@ -449,74 +495,106 @@ struct Instance {
             if (twinThread.joinable()) twinThread.join();
             twin.reset();
             twinQuit = false;
-            for (auto &c : noteOwner)
-                for (auto &n : c) n = 0;
         } else {
-            twin.reset(new OdinAudioProcessor());
+            twin.reset(new ZeroedOdin());
             twin->prepare(halfRate ? 22050.f : 44100.f);
             twinSR = halfRate ? 22050.f : 44100.f;
             twin->m_voices_only = true;
             twin->m_vo_out[0] = twinL, twin->m_vo_out[1] = twinR;
             twin->m_vo_done = &twinProgress;
-            restartTwinTime();
             twinDistLite = false;
-            syncTwin(true);
+            syncTwinNow(true);
             twin->resetAudioEngine();
             odin.resetAudioEngine();   // both from the same start, so their LFOs and envelopes stay together
             twinThread = std::thread([this] { twinLoop(); });
         }
+        for (auto &c : noteOwner)
+            for (auto &n : c) n = 0;
+        restartTwinTime();
         voiceLimit = -1;
         startBudget();
         ++displayRev;
     }
 
-    /* the twin's thread: one block per twinGo; real-time, below MPC's audio threads */
+    /* the twin's thread: one job per twinGo; real-time, below MPC's audio threads */
     void twinLoop() {
         sched_param sp;
         sp.sched_priority = fastcores::rt_priority(10);
         pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp);   // refused without the right: then it runs as it is
+        odin_srand(0x0d1e2);
         for (;;) {
             sem_wait(&twinGo);
             if (twinQuit) return;
             if (int d = twinTestDelayUs.load()) std::this_thread::sleep_for(std::chrono::microseconds(d));
-            twin->processStereo(twinL, twinR, twinFrames, twinMidi, twinMidiFrame, twinNmidi);
-            sem_post(&twinDone);
+            unsigned t = jobTail.load(std::memory_order_relaxed);
+            Job &j = jobs[t % JOBS];
+            OdinAudioProcessor &p = *twin;
+            if (j.sr != twinSR) p.panic(), p.prepare(j.sr), p.resetAudioEngine(), twinSR = j.sr;
+            if (j.distLite != twinDistLite) p.setDistortionLite(j.distLite), twinDistLite = j.distLite;
+            p.m_ctrl_rate = j.ctrlRate, p.m_unison_cap = j.unisonCap, p.m_unison_fit = j.unisonFit;
+            p.m_voice_manager.m_steal_from_stacks = j.steal, p.m_voice_manager.m_voice_limit = j.voiceLimit;
+            p.m_master_tune = j.masterTune, p.m_BPM = j.bpm;
+            if (syncPending.load(std::memory_order_acquire)) {
+                OdinMPC::Lines lines;
+                {
+                    std::lock_guard<std::mutex> g(syncMx);
+                    lines.swap(syncShared);
+                    syncPending = false;
+                }
+                applyTo(p, lines);
+            }
+            for (int i = 0; i < j.nparams; i++)
+                if (RangedAudioParameter *q = p.m_value_tree.getParameter(j.params[i].p->paramID))
+                    p.m_value_tree.setValue(q, j.params[i].v);
+            if (j.panic) p.panic();
+            if (j.reset) p.resetAudioEngine();
+            p.processStereo(twinL, twinR, j.frames, j.midi, j.midiFrame, j.nmidi);
+            for (int i = 0; i < j.frames; i++) {
+                int k = (int)((j.at + i) & 1023);
+                ringL[k] = twinL[i], ringR[k] = twinR[i];
+            }
+            twinDoneTo.store(j.at + j.frames, std::memory_order_release);
+            jobTail.store(t + 1, std::memory_order_release);
         }
     }
 
-    /* the twin takes this processor's patch: knob values one by one, anything else (oscillator types, drawn tables,
-     * the effect order...) with the full apply; full=true always does the full apply */
-    void syncTwin(bool full = false) {
+    /* a knob's new value for the twin: it applies it before its next job */
+    void twinParam(RangedAudioParameter *p) {
         if (!twin) return;
-        twinIdle();
-        OdinMPC::Lines d = OdinMPC::diff(OdinMPC::snapshot(*twin), OdinMPC::snapshot(odin));
+        float v = p->value.load();
+        for (int i = 0; i < npendParams; i++)
+            if (pendParams[i].p == p) { pendParams[i].v = v; return; }
+        if (npendParams < 64) pendParams[npendParams++] = {p, v};
+        else syncTwin();   // a great many at once: the whole state
+    }
+
+    /* anything but a plain knob changed, or a patch loaded: the twin takes the whole state (on its own thread) */
+    void syncTwin() {
+        if (!twin) return;
+        OdinMPC::Lines lines = OdinMPC::snapshot(odin);
+        std::lock_guard<std::mutex> g(syncMx);
+        syncShared.swap(lines);
+        syncPending = true;
+        npendParams = 0;   // the snapshot has them
+    }
+
+    /* make p's state `lines`: knob values one by one when that's all that differs, else the full apply */
+    static void applyTo(OdinAudioProcessor &p, const OdinMPC::Lines &lines, bool full = false) {
+        OdinMPC::Lines d = OdinMPC::diff(OdinMPC::snapshot(p), lines);
         if (d.empty() && !full) return;
         bool plain = !full;
         for (auto &kv : d)
             if (kv.first.find('.') != std::string::npos) plain = false;
         if (plain) {
             for (auto &kv : d)
-                if (RangedAudioParameter *p = twin->m_value_tree.getParameter(kv.first))
-                    twin->m_value_tree.setValue(p, (float)atof(kv.second.c_str()));
+                if (RangedAudioParameter *q = p.m_value_tree.getParameter(kv.first))
+                    p.m_value_tree.setValue(q, (float)atof(kv.second.c_str()));
         } else {
-            OdinMPC::apply(*twin, d);
+            OdinMPC::apply(p, d);
         }
     }
 
-    /* the settings that aren't part of the patch, every block */
-    void twinRuntime() {
-        OdinAudioProcessor &t = *twin;
-        float sr = halfRate ? 22050.f : 44100.f;
-        if (sr != twinSR) t.panic(), t.prepare(sr), t.resetAudioEngine(), twinSR = sr;
-        if (distLite != twinDistLite) t.setDistortionLite(distLite), twinDistLite = distLite;
-        t.m_ctrl_rate = odin.m_ctrl_rate;
-        t.m_unison_cap = odin.m_unison_cap;
-        t.m_unison_fit = odin.m_unison_fit;
-        t.m_voice_manager.m_steal_from_stacks = odin.m_voice_manager.m_steal_from_stacks;
-        t.m_voice_manager.m_voice_limit = odin.m_voice_manager.m_voice_limit;
-        t.m_master_tune = odin.m_master_tune;
-        t.m_BPM = odin.m_BPM;
-    }
+    void syncTwinNow(bool full = false) { applyTo(*twin, OdinMPC::snapshot(odin), full); }
 
     static int liveVoices(OdinAudioProcessor &p) {
         int n = 0;
@@ -524,101 +602,91 @@ struct Instance {
         return n;
     }
 
-    /* the twin's lead, in this processor's frames: 128 (2.9 ms) at 44.1 kHz, 80 at Ultra's 22.05 kHz (3.6 ms; a
-     * block there is 64 or 65 frames) */
-    int twinLag() const { return halfRate ? 80 : 128; }
+    /* the twin's lead, in this processor's frames: 128 output frames (2.9 ms, ENGINE_LATENCY) at either rate */
+    int twinLag() const { return halfRate ? 64 : 128; }
 
-    /* from silence: nothing queued, nothing ahead */
+    /* from silence (STOP, a patch or project load, Ultra in or out): nothing queued, nothing from before plays */
     void restartTwinTime() {
-        twinIdle();
-        nowFrame = 0;
         nqueued = 0;
-        memset(ringL, 0, sizeof ringL), memset(ringR, 0, sizeof ringR);
+        restartAt = nowFrame;
+        pendPanic = true;
     }
 
-    /* wait for a block the twin ran late with, and put it in the ring; after this the twin isn't running */
-    void twinIdle() {
-        if (!twinBusy) return;
-        sem_wait(&twinDone);
-        twinBusy = false;
-        storeTwinBlock(twinPendingAt, twinFrames);
-    }
-
-    void storeTwinBlock(long at, int n) {
-        for (int i = 0; i < n; i++) {
-            int k = (int)((at + i) & 1023);
-            ringL[k] = twinL[i], ringR[k] = twinR[i];
-        }
-    }
-
-    /* Odin's block, with the twin's share alongside when it plays */
+    /* Odin's block through the twin's pipeline (always twinLag() behind, so the latency never changes); the twin gets
+     * notes only in poly without the arp, but runs every block so its LFOs and envelopes stay with this one's */
     void process(float *l, float *r, int n) {
-        if (twin && !twinPlays() && twinRan) {   // mono, legato or the arp from now on: everything on this processor
-            twinIdle();
-            twin->panic();
-            for (auto &c : noteOwner)
-                for (auto &k : c) k = 0;
-            flushQueued();
-        }
-        twinRan = false;
-        if (!twinPlays() || n <= 0) {
+        if (!twin || n <= 0) {
             odin.m_twin_done = nullptr;
             odin.processStereo(l, r, n, midi, midiFrame, nmidi);
             return;
         }
-        // in pieces no longer than the lag (a host block is 128 frames: one piece, 2 in Ultra's odd blocks at most)
+        if (!twinPlays() && twinRan) {   // mono, legato or the arp from now on: its notes stop
+            pendPanic = true;
+            for (auto &c : noteOwner)
+                for (auto &k : c) k = 0;
+        }
+        twinRan = twinPlays();
         int done = 0, lag = twinLag();
         while (done < n) {
             int m = n - done < lag ? n - done : lag;
             twinPiece(l + done, r + done, m, done);
             done += m;
         }
-        twinRan = true;
-    }
-
-    /* the queued MIDI left over when the twin stops playing: now, at the block's start */
-    void flushQueued() {
-        int room = MAX_MIDI - nmidi;
-        for (int i = 0; i < nqueued && i < room; i++) {
-            memmove(midi[1], midi[0], sizeof(midi[0]) * nmidi);
-            memmove(midiFrame + 1, midiFrame, sizeof(int) * nmidi);
-            memcpy(midi[0], queued[i].m, 3), midiFrame[0] = 0, nmidi++;
-        }
-        nqueued = 0;
     }
 
     /* one piece of m frames, starting `from` frames into the host block (whose MIDI is midi[]/midiFrame[]) */
     void twinPiece(float *l, float *r, int m, int from) {
-        twinIdle();
-        twinRuntime();
-        // the twin's notes now; this processor's (and everything both take) into the lag queue
-        int load[2] = {liveVoices(odin), liveVoices(*twin)};
-        twinNmidi = 0;
+        unsigned head = jobHead.load(std::memory_order_relaxed);
+        bool room = head - jobTail.load(std::memory_order_acquire) < (unsigned)JOBS;
+        bool give = room && twinPlays() && twinRestFrames <= 0;
+        Job *j = room ? &jobs[head % JOBS] : nullptr;
+        if (j) j->nmidi = 0;
+        // the twin's notes in its job; this processor's (and what both take) into the lag queue
+        if (twinIsIdle()) twinVoicesKnown = liveVoices(*twin);
+        int load[2] = {liveVoices(odin), twinVoicesKnown};
         for (int i = 0; i < nmidi; i++) {
             if (midiFrame[i] < from || midiFrame[i] >= from + m) continue;
             uint8_t st = midi[i][0] & 0xf0, ch = midi[i][0] & 0x0f, key = midi[i][1] & 0x7f;
             int to = 2;   // both
             if (st == 0x90 && midi[i][2]) {
-                to = load[1] < load[0] ? 1 : 0;
+                to = give && load[1] < load[0] ? 1 : 0;
                 load[to] += 1;
                 noteOwner[ch][key] = (int8_t)to;
             } else if (st == 0x80 || (st == 0x90 && !midi[i][2])) {
                 to = noteOwner[ch][key];
             }
-            if (to != 0 && twinNmidi < MAX_MIDI) {
-                memcpy(twinMidi[twinNmidi], midi[i], 3);
-                twinMidiFrame[twinNmidi++] = midiFrame[i] - from;
+            if (to != 0 && j && j->nmidi < MAX_MIDI) {
+                memcpy(j->midi[j->nmidi], midi[i], 3);
+                j->midiFrame[j->nmidi++] = midiFrame[i] - from;
+            } else if (to == 1) {
+                if (nlateOffs < MAX_MIDI) memcpy(lateOffs[nlateOffs++], midi[i], 3);
             }
             if (to != 1 && nqueued < 512) {
                 queued[nqueued].at = nowFrame + (midiFrame[i] - from);
                 memcpy(queued[nqueued++].m, midi[i], 3);
             }
         }
-        // the twin: frames [nowFrame, nowFrame + m), on its core
-        twinFrames = m;
-        twinPendingAt = nowFrame;
-        twinBusy = true;
-        sem_post(&twinGo);
+        // the twin: frames [nowFrame, nowFrame + m), with what it must apply first
+        if (j) {
+            for (int i = 0; i < nlateOffs && j->nmidi < MAX_MIDI; i++) {   // note-offs that missed a full queue
+                memmove(j->midi[1], j->midi[0], sizeof(j->midi[0]) * j->nmidi);
+                memmove(j->midiFrame + 1, j->midiFrame, sizeof(int) * j->nmidi);
+                memcpy(j->midi[0], lateOffs[i], 3), j->midiFrame[0] = 0, j->nmidi++;
+            }
+            nlateOffs = 0;
+            j->at = nowFrame, j->frames = m;
+            j->nparams = npendParams;
+            memcpy(j->params, pendParams, sizeof(TwinParam) * npendParams);
+            npendParams = 0;
+            j->panic = pendPanic, pendPanic = false;
+            j->reset = pendReset, pendReset = false;
+            j->ctrlRate = odin.m_ctrl_rate, j->unisonCap = odin.m_unison_cap, j->unisonFit = odin.m_unison_fit;
+            j->steal = odin.m_voice_manager.m_steal_from_stacks, j->voiceLimit = odin.m_voice_manager.m_voice_limit;
+            j->masterTune = odin.m_master_tune, j->bpm = odin.m_BPM, j->distLite = distLite;
+            j->sr = halfRate ? 22050.f : 44100.f;
+            jobHead.store(head + 1, std::memory_order_release);
+            sem_post(&twinGo);
+        }
         // this processor: frames [nowFrame - lag, +m), with its MIDI from back then and the twin's finished voices
         long start = nowFrame - twinLag();
         int nm = 0, keep = 0;
@@ -632,28 +700,39 @@ struct Instance {
             }
         }
         nqueued = keep;
+        long ready = twinDoneTo.load(std::memory_order_acquire);
+        if (twinTestWait) {   // (not counted as load: the budget would shed notes for the time spent waiting)
+            double w0 = nowSeconds();
+            while ((ready = twinDoneTo.load(std::memory_order_acquire)) < start + m && start + m <= nowFrame && !twinIsIdleOrBehind(start + m))
+                std::this_thread::yield();
+            testWaited += nowSeconds() - w0;
+        }
+        bool late = false;
         for (int i = 0; i < m; i++) {
             long t = start + i;
-            mixL[i] = t < 0 ? 0.f : ringL[t & 1023];
-            mixR[i] = t < 0 ? 0.f : ringR[t & 1023];
+            bool ok = t >= restartAt && t >= 0 && t < ready;
+            if (!ok && t >= restartAt && t >= 0) late = true;
+            mixL[i] = ok ? ringL[t & 1023] : 0.f;
+            mixR[i] = ok ? ringR[t & 1023] : 0.f;
+        }
+        if (late) {
+            ++twinLateBlocks;
+            twinRestFrames = 2 * 44100;   // no new notes for it for 2 s
         }
         odin.m_twin_out[0] = mixL, odin.m_twin_out[1] = mixR;
         odin.m_twin_done = &twinAll;   // all there: the hook adds without waiting
         odin.processStereo(l, r, m, mainMidi, mainMidiFrame, nm);
         odin.m_twin_done = nullptr;
-        // the twin should be done by now (it had the same time); if it ran late, the next piece waits for it
-        timespec until;
-        clock_gettime(CLOCK_REALTIME, &until);
-        until.tv_nsec += (long)(m * (halfRate ? 2 : 1) * 1e9 / 44100.0);
-        if (until.tv_nsec >= 1000000000L) until.tv_sec++, until.tv_nsec -= 1000000000L;
-        if (sem_timedwait(&twinDone, &until) == 0) {
-            twinBusy = false;
-            storeTwinBlock(twinPendingAt, m);
-        } else {
-            ++twinLateBlocks;
-        }
+        if (twinRestFrames > 0) twinRestFrames -= m * (halfRate ? 2 : 1);
         nowFrame += m;
     }
+
+    /* engine_test's wait: done when the frames are there, or the twin has nothing queued that could bring them */
+    bool twinIsIdleOrBehind(long upTo) const { return twinIsIdle() && twinDoneTo.load() < upTo; }
+
+    int twinVoicesKnown = 0;   // the twin's voices, counted the last time it was idle (never while it runs)
+    uint8_t lateOffs[MAX_MIDI][3];
+    int nlateOffs = 0;
 
     // ---- presets
     OdinMPC::Lines initState;   // Odin's init patch, as a snapshot (the bank stores differences from it)
@@ -686,11 +765,8 @@ struct Instance {
         }
         odin.m_value_tree.state.getChildWithName("misc").setProperty("patch_name", String(nameOf(n)), nullptr);
         odin.resetAudioEngine();   // as Odin does after a patch loads (voices, filters, LFOs, envelopes)
-        if (twin) {   // TWO CORES: the twin takes the patch and starts with this one
-            twinIdle();
-            twin->panic();
-            syncTwin();
-            twin->resetAudioEngine();
+        if (twin) {   // TWO CORES: the twin takes the patch and starts with this one (when it's idle)
+            syncTwin(), pendReset = true;
             restartTwinTime();
         }
         preset = n;
@@ -729,7 +805,6 @@ struct Instance {
         }
         if (ceiling != VOICE_CEILING) s += "voices=" + std::to_string(ceiling) + "\n";
         if (eco != ECO_AUTO) s += "eco=" + std::to_string(eco) + "\n";
-        if (twin) s += "cores=2\n";
         if (theme) s += "look=" + std::to_string(theme) + "\n";   // 1.4.7: "look" (1.4-1.4.6 saved "theme", another list)
         if (tuneHz != 440.f) {
             char t[32];
@@ -782,13 +857,11 @@ struct Instance {
         setEco(e);
         setTune(tune);
         theme = th >= 0 && th < NTHEMES ? th : 0;
-        setTwin(cores == 2);
+        (void)cores;   // 1.4.11 test builds saved it; always two now
         if (twin) {   // the project's patch, edits included, on both, from the same start
-            twinIdle();
-            twin->panic();
-            syncTwin(true);
-            twin->resetAudioEngine();
+            syncTwin(), pendReset = true;
             odin.resetAudioEngine();
+            restartTwinTime();
         }
         ++displayRev;
     }
@@ -918,15 +991,15 @@ struct Instance {
     /* the voices sounding on the busier processor (TWO CORES: the budget is per processor) */
     int activeVoices() const {
         int n = liveVoices(const_cast<OdinAudioProcessor &>(odin));
-        if (twin && !twinBusy) {
-            int t = liveVoices(*twin);
+        if (twin) {
+            int t = twinVoicesKnown;
             if (t > n) n = t;
         }
         return n;
     }
 
     /* the most voices one processor may sound: the ceiling, split between two with TWO CORES */
-    int perProcessorCeiling() const { return twin ? (ceiling + 1) / 2 : ceiling; }
+    int perProcessorCeiling() const { return twinPlays() ? (ceiling + 1) / 2 : ceiling; }
 
     /* Follow the measured load: per-voice and base cost estimates, the limit from them (down at once, up one voice
      * per half second), and if the load still gets close to the limit, fade out the oldest note. */
@@ -971,7 +1044,8 @@ struct Instance {
 
     /* fade out the oldest note (all its unison voices): one already released first, else the oldest held */
     void shedOldest() {
-        OdinAudioProcessor &odin = twin && !twinBusy && liveVoices(*twin) > liveVoices(this->odin) ? *twin : this->odin;   // the busier one
+        // the busier processor (the twin only while it's idle: its thread may be using it)
+        OdinAudioProcessor &odin = twin && twinIsIdle() && liveVoices(*twin) > liveVoices(this->odin) ? *twin : this->odin;
         auto &vm = odin.m_voice_manager;
         for (int pass = 0; pass < 2; pass++)
             for (int age = VOICES - 1; age >= 0; age--) {
@@ -1019,13 +1093,13 @@ struct Instance {
         switch (c.kind) {
         case K_NORM: {
             RangedAudioParameter *p = param(c);
-            if (p) odin.m_value_tree.setValue(p, p->convertFrom0to1(v));
+            if (p) odin.m_value_tree.setValue(p, p->convertFrom0to1(v)), twinParam(p);
             break;
         }
         case K_INT:
         case K_TOG: {
             RangedAudioParameter *p = param(c);
-            if (p) odin.m_value_tree.setValue(p, std::round(v));
+            if (p) odin.m_value_tree.setValue(p, std::round(v)), twinParam(p);
             break;
         }
         case K_TOPT: {
@@ -1051,12 +1125,10 @@ struct Instance {
             else if (k == "panic" && v > 0.5f) {
                 odin.panic();
                 if (twin) {
-                    twinIdle();
-                    twin->panic();
-                    restartTwinTime();   // nothing queued or ahead plays after STOP
+                    restartTwinTime();   // its next job starts with STOP   // nothing queued or ahead plays after STOP
                 }
             }
-            else if (k == "cores") setTwin(std::lround(v) == 1);
+            else if (k == "cores") {}   // read-only since TWO CORES is always on
             else if ((k == "bank_prev" || k == "bank_next") && v > 0.5f) {   // 1.4.11: the next bank, and its first patch
                 int n = tapOnce(k) ? banks().n : 0;
                 if (!n) break;
@@ -1142,14 +1214,14 @@ struct Instance {
             std::string k = c.key;
             if (k == "preset") return (float)preset;
             if (k == "polyphony") return (float)ceiling;
-            if (k == "voices") return (float)(twin ? std::min(voiceLimit * 2, ceiling) : voiceLimit);
+            if (k == "voices") return (float)(twinPlays() ? std::min(voiceLimit * 2, ceiling) : voiceLimit);
             if (k == "tune") return (tuneHz - TUNE_LO) / (TUNE_HI - TUNE_LO);
             if (k == "theme") return (float)theme;
             if (k == "browse_bank") return (float)browseBank;
             if (k == "browse_patch") return (float)(browseIndex() < 0 ? 0 : browseIndex());
             if (k == "cpu") return (float)cpuShown;
             if (k == "eco") return (float)eco;
-            if (k == "cores") return twin ? 1.f : 0.f;
+            if (k == "cores") return 0.f;   // its one option, "Two"
             if (k == "eco_active") return ecoActive() ? 1.f : 0.f;
             if (int n = shapeOsc(k)) {
                 RangedAudioParameter *p = shapeParam(n);
@@ -1195,10 +1267,11 @@ struct Instance {
     // ---- audio
     void render(int16_t *out, int frames) {
         double t0 = nowSeconds();
+        testWaited = 0;
         if (halfRate) renderHalf(frames);
         else process(left, right, frames);
         nmidi = 0;
-        double spent = nowSeconds() - t0;
+        double spent = nowSeconds() - t0 - testWaited;
         for (int i = 0; i < frames; i++) {
             if (!std::isfinite(left[i]) || !std::isfinite(right[i])) ++nonFinite;   // engine_test: none, in any mode
             out[2 * i] = toS16(left[i]);
@@ -1279,6 +1352,15 @@ void set_param(void *inst, const char *key, const char *val) {
         s->loadState(val);
         return;
     }
+    if (!strcmp(key, "test_one_core")) {   // tools/engine_test: everything on this processor
+        s->forceOneCore = atoi(val) != 0;
+        s->voiceLimit = -1, s->startBudget();
+        return;
+    }
+    if (!strcmp(key, "test_twin_wait")) {   // tools/engine_test
+        s->twinTestWait = atoi(val) != 0;
+        return;
+    }
     if (!strcmp(key, "test_twin_delay_us")) {   // tools/engine_test
         s->twinTestDelayUs = atoi(val);
         return;
@@ -1298,8 +1380,10 @@ void set_param(void *inst, const char *key, const char *val) {
     }
     auto it = s->index.find(key);
     if (it == s->index.end()) return;
-    s->set(CONTROLS[it->second], (float)atof(val));
-    s->syncTwin();   // TWO CORES: the twin follows (nothing when CORES is One)
+    const Control &c = CONTROLS[it->second];
+    s->set(c, (float)atof(val));
+    if (c.kind != K_NORM && c.kind != K_INT && c.kind != K_TOG && strcmp(key, "panic") && strcmp(key, "preset"))
+        s->syncTwin();   // TWO CORES: anything but a plain knob: the twin compares the whole state when idle
 }
 
 int get_param(void *inst, const char *key, char *buf, int len) {

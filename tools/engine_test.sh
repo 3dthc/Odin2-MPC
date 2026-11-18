@@ -13,4 +13,4 @@ H="$(find "$P/src" "$P/vst/build" \( -name '*.h' -o -name '*.inc' \) -newer "$O/
 for f in $SRCS; do echo "$P/$f"; done | xargs -P "$(nproc)" -I{} sh -c 'o="'"$O"'/$(basename "{}").o"; [ "$o" -nt "{}" ] || g++ -std=gnu++17 -O2 -w -c "{}" '"$I"' -o "$o"'
 touch "$O/.built"
 g++ -std=gnu++17 -O2 -w $I "$P/tools/engine_test.cpp" "$O"/*.o -lpthread -o "$O/engine_test"
-cd "$P" && "$O/engine_test" "presets_src/Soundbanks/Factory Presets"
+cd "$P" && ODIN2MPC_TWIN_WAIT=1 "$O/engine_test" "presets_src/Soundbanks/Factory Presets"

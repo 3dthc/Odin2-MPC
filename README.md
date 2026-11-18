@@ -103,6 +103,10 @@ looks after this itself; there is no voices knob to turn.
   per sample. The light next to ECO is on while ECO is cutting unison or the distortion's oversampling, and always in Ultra. ECO is saved
   with the project and stays as you set it when you change patches.
 - **STOP** silences everything at once: every voice, held notes, the arpeggiator, and the delay and reverb tails.
+- **Two cores:** Odin plays on two of the MPC's cores, with nothing to set. A second copy of the engine on its own thread
+  plays half the notes (voices only; filter 3 and the effects still run once), one block ahead, so the audio thread
+  never waits for it. Mono, legato and arpeggiator patches stay on one core. It adds 128 samples (2.9 ms) of latency,
+  always the same and reported to MPC, and gives heavy patches about twice the voices.
 
 ## On a computer (MPC Desktop, Logic Pro, DAWs)
 

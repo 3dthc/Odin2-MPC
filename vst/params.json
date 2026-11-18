@@ -1968,7 +1968,6 @@
    "key": "cores",
    "name": "Cores",
    "options": [
-    "One",
     "Two"
    ]
   }

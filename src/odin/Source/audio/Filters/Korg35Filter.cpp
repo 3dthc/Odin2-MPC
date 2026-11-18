@@ -23,6 +23,7 @@ Korg35Filter::Korg35Filter() {
 
 	// init
 	m_k     = 0.01;
+	m_k_modded = m_k; // odin2-mpc: was left unset, and doFilter() divides by it (an invalid value until update() ran)
 	m_alpha = 0.0;
 
 	m_LPF1.setLP();

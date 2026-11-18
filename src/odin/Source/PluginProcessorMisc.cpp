@@ -120,6 +120,7 @@ void OdinAudioProcessor::resetAudioEngine() {
 	m_global_env.reset();
 
 	m_voice_manager.reset();
+	m_ctrl_count = 1 << 20; // odin2-mpc: the next sample works everything out (filter coefficients before first use)
 }
 
 void OdinAudioProcessor::setBPM(float p_BPM) {

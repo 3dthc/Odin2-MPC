@@ -78,7 +78,7 @@ public:
 	std::atomic<int> *m_twin_done = nullptr;
 	int64_t m_twin_deadline = 0;
 	int m_twin_late = 0; // samples given up on (engine_test reads it)
-	int m_ctrl_count = 0;
+	int m_ctrl_count = 1 << 20; // odin2-mpc: large, so the first sample (and the first after a reset) is a tick
 	bool m_voice_live[VOICES] = {}; // odin2-mpc: which voices sound, for the mod matrix (ModMatrixRow::m_live)
 	// voice protection: start a voice's amp envelope on a 15 ms release (it ends, and frees the voice, quickly)
 	void fastReleaseVoice(int p_voice) {

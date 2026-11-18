@@ -112,7 +112,7 @@ void OdinAudioProcessor::processStereo(float *p_left, float *p_right, int p_fram
 			++m_ctrl_count;
 			tick = ctrl_force || m_ctrl_count >= m_ctrl_rate;
 			if (tick) {
-				ctrl_steps   = m_ctrl_count;
+				ctrl_steps   = m_ctrl_count > m_ctrl_rate ? m_ctrl_rate : m_ctrl_count; // odin2-mpc: the count starts large (a tick on the first sample)
 				m_ctrl_count = 0;
 			}
 		}

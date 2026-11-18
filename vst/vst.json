@@ -15,7 +15,8 @@
     "HAS_LFO_BPM": 1,
     "HAS_DISPLAY_REV": 1,
     "DISPLAY_REV_NO_UPDATE": 1,
-    "PARAM_TEXT_MAX": 48
+    "PARAM_TEXT_MAX": 48,
+    "ENGINE_LATENCY": 128
   },
   "build": {
     "root": "..",

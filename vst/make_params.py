@@ -233,7 +233,7 @@ special("bank_prev", "Prev Bank", momentary=True)
 special("bank_next", "Next Bank", momentary=True)
 special("browse_bank", "BANK")     # BROWSE Q-Link 1: the bank only (1.4.1)
 special("browse_patch", "PATCH")   # BROWSE Q-Link 2: a patch of that bank only (1.4.1)
-special("cores", "Cores", options=["One", "Two"])   # 1.4.11: TWO CORES, half the notes on a second processor
+special("cores", "Cores", options=["Two"])   # 1.4.11: always two (half the notes on a second processor); read-only
 
 
 def build():
