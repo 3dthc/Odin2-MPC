@@ -28,9 +28,10 @@ knobs, and each column is one Q-Link column, so the four Q-Links turn exactly th
 and its value on a glass plate, the same size on every page. Choices you set and leave (types, routing, play mode)
 are in the panel on the right, where MPC's Q-Link panel slides in while you turn a Q-Link.
 
-- **Top bar (every page):** ECO and its light, **BANK ◀ name ▶** (the arrows change the bank only, the sound stays),
+- **Top bar (every page):** ECO and its light, **BANK ◀ name ▶** (the arrows load the next or previous bank's first patch, as on OB-Xd),
   **PATCH ◀ name ▶** (the patches of that bank), VOICES (how many voices the patch can sound now; Odin sets it,
-  see below), the CPU meter, STOP. Patches are also in MPC's PRESET menu.
+  see below), the CPU meter, STOP. Patches are also in MPC's PRESET menu. Names on the top bar and BROWSE leave out a
+  factory patch's "[author]" tag so they fit at a readable size; the PRESET menu shows the full name.
 - **MAIN:** Voice (master, glide, unison detune and width), Filter 1 (cutoff, resonance, envelope, key follow, and
   its type), the amp envelope, Space (delay and reverb amounts, with their on buttons). Right: play mode, unison
   voices, velocity, bend range, arpeggiator.

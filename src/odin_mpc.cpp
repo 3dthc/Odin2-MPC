@@ -201,6 +201,15 @@ const BankCost BANK_COST[] = {
 };
 static_assert(sizeof BANK_COST / sizeof BANK_COST[0] == NBANK, "bank_cost.inc doesn't match the bank");
 
+/* 1.4.11: the name on the main page and BROWSE, without the "[author]" tag many factory names end with, so it fits its
+ * box at a readable size (MPC's PRESET menu and the Sounds-browser files keep the full name) */
+std::string screenName(const char *n) {
+    std::string t = n;
+    size_t a = t.rfind(" [");
+    if (a != std::string::npos && a > 0 && t.back() == ']') t.erase(a);
+    return t;
+}
+
 /* a user patch hasn't been measured: start from a heavy factory patch's cost (the 80th percentile), and let the
  * budget follow what it measures */
 const BankCost &userCost() {
@@ -678,14 +687,16 @@ struct Instance {
             std::string k = c.key;
             if (k == "preset") loadPreset((int)std::lround(v));
             else if (k == "panic" && v > 0.5f) odin.panic();
-            else if ((k == "bank_prev" || k == "bank_next") && v > 0.5f) {   // the bank to choose patches from
+            else if ((k == "bank_prev" || k == "bank_next") && v > 0.5f) {   // 1.4.11: the next bank, and its first patch
                 int n = tapOnce(k) ? banks().n : 0;
                 if (!n) break;
-                browseBank = (browseBank + (k == "bank_next" ? 1 : n - 1)) % n;
+                int b = (banks().of(preset) + (k == "bank_next" ? 1 : n - 1)) % n;
+                if (!banks().patches[b].empty()) loadPreset(banks().patches[b][0]);
+                browseBank = b;
                 ++displayRev;
             } else if ((k == "preset_prev" || k == "preset_next") && v > 0.5f) {   // a patch of that bank
                 if (!tapOnce(k)) break;
-                const std::vector<int> &ps = banks().patches[browseBank];
+                const std::vector<int> &ps = banks().patches[banks().of(preset)];   // the loaded patch's bank
                 int at = -1, m = (int)ps.size();
                 for (int i = 0; i < m; i++)
                     if (ps[i] == preset) at = i;
@@ -904,10 +915,10 @@ int get_param(void *inst, const char *key, char *buf, int len) {
     if (!strcmp(key, "browse_bank_display")) return snprintf(buf, len, "%s", s->banks().name[s->browseBank]);
     if (!strcmp(key, "browse_patch_display")) {
         int at = s->browseIndex();
-        return snprintf(buf, len, "%s", at < 0 ? "-" : s->nameOf(s->preset));
+        return snprintf(buf, len, "%s", at < 0 ? "-" : screenName(s->nameOf(s->preset)).c_str());
     }
-    if (!strcmp(key, "bank_name")) return snprintf(buf, len, "%s", s->banks().name[s->browseBank]);
-    if (!strcmp(key, "preset_name")) return snprintf(buf, len, "%s", s->nameOf(s->preset));   // its bank: BROWSE
+    if (!strcmp(key, "bank_name")) return snprintf(buf, len, "%s", s->banks().name[s->banks().of(s->preset)]);   // the loaded patch's
+    if (!strcmp(key, "preset_name")) return snprintf(buf, len, "%s", screenName(s->nameOf(s->preset)).c_str());   // its bank: BROWSE
     if (!strcmp(key, "preset_count")) return snprintf(buf, len, "%d", NBANK);
     if (!strcmp(key, "voices_active")) return snprintf(buf, len, "%d", s->lastActive);   // tools
     if (!strcmp(key, "notes_held")) {   // tools: how many keys have a voice sounding, not released
@@ -954,7 +965,7 @@ int get_param(void *inst, const char *key, char *buf, int len) {
         }
         const std::vector<int> &ps = bk.patches[s->browseBank];
         if (i < 0 || i >= (int)ps.size()) return on ? snprintf(buf, len, "0") : snprintf(buf, len, " ");
-        return on ? snprintf(buf, len, "%d", ps[i] == s->preset) : snprintf(buf, len, "%s", s->nameOf(ps[i]));
+        return on ? snprintf(buf, len, "%d", ps[i] == s->preset) : snprintf(buf, len, "%s", screenName(s->nameOf(ps[i])).c_str());
     }
     if (kl > 8 && !strcmp(key + kl - 8, "_display")) {
         auto it = s->index.find(std::string(key, kl - 8));

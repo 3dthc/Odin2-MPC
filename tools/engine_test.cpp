@@ -277,19 +277,29 @@ int main(int argc, char **argv) {
         void *x = e->create(nullptr);
         e->set_param(x, "preset", "0");
         std::string b0 = get(e, x, "bank_name"), p0 = get(e, x, "preset_name");
+        e->set_param(x, "bank_next", "1");   // 1.4.11: like OB-Xd, the bank and its first patch together
+        std::string b1 = get(e, x, "bank_name"), p1 = get(e, x, "preset_name");
+        CHECK(b1 != b0 && p1 != p0 && p1 == get(e, x, "patch_slot_1") && get(e, x, "patch_slot_1_on") == "1",
+              "BANK arrow loads the next bank's first patch (%s -> %s, %s)", b0.c_str(), b1.c_str(), p1.c_str());
+        tap_gap();
+        e->set_param(x, "bank_prev", "1");
+        CHECK(get(e, x, "bank_name") == b0 && get(e, x, "preset_name") == p0, "and back (%s, %s)",
+              get(e, x, "bank_name").c_str(), get(e, x, "preset_name").c_str());
+        tap_gap();
         e->set_param(x, "bank_next", "1");
-        std::string b1 = get(e, x, "bank_name");
-        CHECK(b1 != b0 && get(e, x, "preset_name") == p0, "BANK arrow changes the bank only (%s -> %s, still %s)",
-              b0.c_str(), b1.c_str(), p0.c_str());
-        e->set_param(x, "preset_next", "1");
-        std::string p1 = get(e, x, "preset_name");
-        CHECK(p1 == get(e, x, "patch_slot_1") && get(e, x, "patch_slot_1_on") == "1",
-              "PATCH arrow then loads that bank's first patch (%s)", p1.c_str());
         tap_gap();   // 1.4.6: presses within 250 ms of each other are one touch
         e->set_param(x, "preset_next", "1");
-        CHECK(get(e, x, "preset_name") == get(e, x, "patch_slot_2"), "and steps within the bank");
+        CHECK(get(e, x, "preset_name") == get(e, x, "patch_slot_2") && get(e, x, "bank_name") == b1, "PATCH arrow steps within the bank");
         e->set_param(x, "preset_next", "1");   // at once: the same touch reported again, no second step
         CHECK(get(e, x, "preset_name") == get(e, x, "patch_slot_2"), "a touch reported twice steps once");
+        // a patch picked from MPC's PRESET menu: the top bar's bank follows it, and the arrows step from there
+        e->set_param(x, "preset", "100");
+        std::string pb = get(e, x, "bank_name");
+        tap_gap();
+        e->set_param(x, "bank_next", "1");
+        CHECK(get(e, x, "bank_name") != pb && get(e, x, "preset_name") == get(e, x, "patch_slot_1"),
+              "after a PRESET-menu pick the bank arrow steps from that patch's bank (%s -> %s)", pb.c_str(), get(e, x, "bank_name").c_str());
+        tap_gap();
         e->set_param(x, "bank_slot_3", "1");
         e->set_param(x, "patch_slot_2", "1");
         CHECK(get(e, x, "bank_name") == get(e, x, "bank_slot_3") && get(e, x, "preset_name") == get(e, x, "patch_slot_2"),
@@ -297,8 +307,8 @@ int main(int argc, char **argv) {
         // BROWSE Q-Links (1.4.1): BANK moves the bank only; PATCH stays inside the bank (clamped at its ends)
         std::string before = get(e, x, "preset_name");
         e->set_param(x, "browse_bank", "5");
-        CHECK(get(e, x, "bank_name") == get(e, x, "bank_slot_6") && get(e, x, "preset_name") == before,
-              "BROWSE Q-Link 1 changes the bank only (%s)", get(e, x, "bank_name").c_str());
+        CHECK(get(e, x, "browse_bank_display") == get(e, x, "bank_slot_6") && get(e, x, "preset_name") == before,
+              "BROWSE Q-Link 1 changes the browsed bank only (%s)", get(e, x, "browse_bank_display").c_str());
         e->set_param(x, "browse_patch", "3");
         CHECK(get(e, x, "preset_name") == get(e, x, "patch_slot_1"), "Q-Link 2's first turn in a new bank picks its first patch");
         e->set_param(x, "browse_patch", "2");
@@ -321,6 +331,23 @@ int main(int argc, char **argv) {
         CHECK(get(e, y, "theme") == "1", "and its 2000 look stays 2000");
         e->destroy(x);
         e->destroy(y);
+    }
+
+    // 3f2. names on the main page and BROWSE leave out the "[author]" tag; MPC's PRESET menu keeps it (1.4.11)
+    {
+        void *x = e->create(nullptr);
+        int tagged = -1;
+        for (int i = 0; i < 261 && tagged < 0; i++) {
+            std::string n = get(e, x, ("preset:" + std::to_string(i)).c_str());
+            if (n.size() > 3 && n.back() == ']' && n.rfind(" [") != std::string::npos) tagged = i;
+        }
+        e->set_param(x, "preset", std::to_string(tagged).c_str());
+        std::string full = get(e, x, ("preset:" + std::to_string(tagged)).c_str()), shown = get(e, x, "preset_name");
+        CHECK(tagged >= 0 && shown == full.substr(0, full.rfind(" [")) && get(e, x, "browse_patch_display") == shown,
+              "a tagged name shows without its tag (%s -> %s)", full.c_str(), shown.c_str());
+        e->set_param(x, "preset", "0");
+        CHECK(get(e, x, "preset_name") == get(e, x, "preset:0"), "an untagged name is unchanged (%s)", get(e, x, "preset_name").c_str());
+        e->destroy(x);
     }
 
     // 3g. the USER bank (1.4.10)

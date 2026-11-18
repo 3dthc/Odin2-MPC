@@ -784,10 +784,10 @@ def header():
     left = (lambda u: arrow_button(-1, False, ui_=u), lambda u: arrow_button(-1, True, ui_=u))
     right = (lambda u: arrow_button(1, False, ui_=u), lambda u: arrow_button(1, True, ui_=u))
     button_img(338, 46, "bank_prev", "arrow_l", left[0], left[1], 40, 46)
-    readout(448, 46, 170, 46, "bank_name", 24)
+    readout(448, 46, 170, 46, "bank_name", 30)
     button_img(558, 46, "bank_next", "arrow_r", right[0], right[1], 40, 46)
     button_img(610, 46, "preset_prev", "arrow_l", left[0], left[1], 40, 46)
-    readout(761, 46, 254, 46, "preset_name", 24)
+    readout(761, 46, 254, 46, "preset_name", 30)
     button_img(912, 46, "preset_next", "arrow_r", right[0], right[1], 40, 46)
     readout(976, 46, 72, 46, "voices", 28)
     themed(lambda u, t: 'meter cx=1078 cy=%d w=120 h=42 key=cpu strip=%s frames=21' % (
@@ -958,7 +958,7 @@ def tab_browse():
     tw = (lw - gap) // cols
     # one tile set in every look (the kit names a list's tile pictures after its parameter): graphite glass, light names
     line('list x=%d y=%d w=%d h=%d key=bank_slot cols=%d rows=%d th=%d gap=%d order=cols img=%s img_on=%s '
-         'tsize=25 tcolor=%s' % (bx + 14, Y(TOP + 54), lw, rows * th + (rows - 1) * gap, cols, rows, th, gap,
+         'tsize=30 tweight=semibold tcolor=%s' % (bx + 14, Y(TOP + 54), lw, rows * th + (rows - 1) * gap, cols, rows, th, gap,
                                 save(card(False, tw, th, NEUTRAL), "card_bank.png"),
                                 save(card(True, tw, th, NEUTRAL), "card_bank_on.png"), hexc(NEUTRAL["ink"])))
     px, pw = 388, W - 8 - 388
@@ -968,7 +968,7 @@ def tab_browse():
     tw = (lw - 2 * gap) // cols
     # one tile set in every look (the kit names a list's tile pictures after its parameter): graphite glass, light names
     line('list x=%d y=%d w=%d h=%d key=patch_slot cols=%d rows=%d th=%d gap=%d order=cols img=%s img_on=%s '
-         'tsize=24 tcolor=%s' % (px + 14, Y(TOP + 54), lw, rows * th + (rows - 1) * gap, cols, rows, th, gap,
+         'tsize=28 tweight=semibold tcolor=%s' % (px + 14, Y(TOP + 54), lw, rows * th + (rows - 1) * gap, cols, rows, th, gap,
                                 save(card(False, tw, th, NEUTRAL), "card_patch.png"),
                                 save(card(True, tw, th, NEUTRAL), "card_patch_on.png"), hexc(NEUTRAL["ink"])))
     # the look picker: a bar with one button per look; a window in each button shows that look's chip
